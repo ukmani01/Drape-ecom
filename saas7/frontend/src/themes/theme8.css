@@ -1,0 +1,919 @@
+/* ============================================================= */
+/* THEME 8: THE HERITAGE GOLD                                    */
+/* Timeless Luxury Inspired by Louis Vuitton, Hermès & Cartier  */
+/* ============================================================= */
+
+/* ----- DESIGN INSPIRATION ----- */
+/*
+Hero Layout: Inspired by Louis Vuitton's cinematic, product-focused heritage presentation.
+Typography: Inspired by Cartier's bold, refined serif typography.
+Color Palette: Inspired by Hermès' warm cream and rich gold artisan palette.
+Product Framing: Inspired by Tiffany's iconic product presentation with elegant framing.
+Animations: Inspired by Louis Vuitton's smooth, polished micro-interactions.
+This is an original design based on multiple luxury heritage references.
+*/
+
+/* ----- FONTS (Flagship Premium) ----- */
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,600&family=Inter:wght@300;400;500;600;700&display=swap');
+
+/* ----- ROOT VARIABLES (Theme 8 - Heritage Gold Override) ----- */
+:root {
+  /* Primary Palette - Rich Gold */
+  --color-primary: #c8a84c;
+  --color-primary-dark: #b08e3a;
+  --color-primary-light: #d9c193;
+  --color-primary-shadow: rgba(200, 168, 76, 0.25);
+  --color-on-primary: #ffffff;
+
+  /* Secondary - Deep Charcoal */
+  --color-secondary: #1a1a1a;
+  --color-secondary-light: #3d3d3d;
+
+  /* Neutrals - Warm & Refined */
+  --color-background: #fcf9f4;
+  --color-surface: #ffffff;
+  --color-text: #1a1a1a;
+  --color-text-secondary: #5c5544;
+  --color-border: rgba(26, 26, 26, 0.05);
+  --color-card-border: rgba(26, 26, 26, 0.03);
+  --color-shadow: rgba(26, 26, 26, 0.03);
+
+  /* Typography */
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-display: 'Playfair Display', serif;
+
+  /* Radii - Premium & Consistent */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
+
+  /* Shadows - Minimal & Warm */
+  --shadow-card: 0 2px 8px rgba(26, 26, 26, 0.03), 0 4px 16px rgba(26, 26, 26, 0.02);
+  --shadow-hover: 0 4px 16px rgba(26, 26, 26, 0.04), 0 12px 32px rgba(26, 26, 26, 0.03);
+  --shadow-elevated: 0 8px 32px rgba(26, 26, 26, 0.05);
+
+  /* Buttons */
+  --btn-primary-bg: #c8a84c;
+  --btn-primary-text: #ffffff;
+
+  /* Hero */
+  --hero-overlay: linear-gradient(135deg, rgba(26, 26, 26, 0.25) 0%, rgba(26, 26, 26, 0.05) 60%, rgba(26, 26, 26, 0.01) 80%);
+}
+
+/* ----- GLOBAL STYLES (Refined & Warm) ----- */
+body {
+  background: var(--color-background);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  font-weight: 400;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  margin: 0;
+  line-height: 1.7;
+}
+* { box-sizing: border-box; }
+a { text-decoration: none; color: inherit; }
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
+  font-weight: 800;
+  margin: 0;
+  color: var(--color-text);
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+/* ----- CONTAINER (Generous Width) ----- */
+.container {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 0 64px;
+}
+
+/* ----- BUTTONS (Rich Gold, Heritage) ----- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 18px 48px;
+  font-size: 12px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  font-weight: 600;
+  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--color-primary);
+  transition: all 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+  cursor: pointer;
+  font-family: var(--font-sans);
+  position: relative;
+  overflow: hidden;
+  background: transparent;
+}
+
+.btn-accent {
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  border-color: var(--color-primary);
+}
+.btn-accent:hover {
+  background: var(--color-primary-dark);
+  border-color: var(--color-primary-dark);
+  transform: translateY(-2px) scale(1.015);
+  box-shadow: 0 12px 32px var(--color-primary-shadow);
+}
+
+.btn-dark {
+  background: var(--color-secondary);
+  color: var(--color-on-primary);
+  border-color: var(--color-secondary);
+}
+.btn-dark:hover {
+  background: var(--color-secondary-light);
+  border-color: var(--color-secondary-light);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px rgba(26, 26, 26, 0.12);
+}
+
+.btn-outline-white {
+  background: rgba(255, 255, 255, 0.04);
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.2);
+}
+.btn-outline-white:hover {
+  background: #fff;
+  color: var(--color-text);
+  border-color: #fff;
+  transform: scale(1.02);
+}
+
+.btn-block {
+  width: 100%;
+  margin-top: 28px;
+}
+.btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+/* ----- BREADCRUMB (Heritage Editorial) ----- */
+.breadcrumb {
+  font-size: 11px;
+  color: var(--color-text-secondary);
+  padding: 40px 0 16px;
+  letter-spacing: 0.8px;
+}
+.breadcrumb a {
+  transition: color 0.3s;
+}
+.breadcrumb a:hover {
+  color: var(--color-primary);
+}
+.breadcrumb span {
+  color: var(--color-text);
+  font-weight: 600;
+}
+.breadcrumb span::before {
+  content: "—";
+  margin: 0 16px;
+  color: var(--color-border);
+  font-weight: 300;
+}
+
+/* ----- PAGE TITLE (Dramatic Heritage) ----- */
+.page-title {
+  font-size: 46px;
+  margin: 8px 0 48px;
+  font-weight: 800;
+  font-family: var(--font-display);
+  color: var(--color-text);
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+}
+
+/* ----- HERO SECTION (Cinematic Heritage) ----- */
+.hero {
+  position: relative;
+  overflow: hidden;
+  background: #0f0e0c;
+  padding: 0 !important;
+  border-radius: 0 0 var(--radius-xl) var(--radius-xl);
+  margin-bottom: 56px;
+}
+.hero-grid img {
+  width: 100%;
+  height: 80vh;
+  min-height: 520px;
+  object-fit: cover;
+  filter: brightness(0.8) saturate(1.05) contrast(1.02);
+  display: block;
+  transition: transform 18s ease;
+}
+.hero-grid img:hover {
+  transform: scale(1.025);
+}
+.hero-fade {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 320px;
+  background: linear-gradient(to top, var(--color-background) 0%, transparent 100%);
+  z-index: 2;
+}
+.hero-content {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: #fff;
+  z-index: 3;
+  padding: 0 40px;
+}
+.hero-content .floating-badge {
+  display: inline-block;
+  padding: 6px 24px;
+  border: 1px solid rgba(200, 168, 76, 0.3);
+  border-radius: 50px;
+  font-size: 10px;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  color: var(--color-primary-light);
+  margin-bottom: 24px;
+  background: rgba(200, 168, 76, 0.05);
+}
+.hero-content h1 {
+  font-size: clamp(56px, 9vw, 140px);
+  line-height: 1.05;
+  letter-spacing: 6px;
+  color: #fff;
+  margin-bottom: 20px;
+  font-weight: 800;
+  font-family: var(--font-display);
+  text-shadow: 0 8px 48px rgba(0, 0, 0, 0.35);
+}
+.hero-content p {
+  font-size: 17px;
+  color: rgba(255, 255, 255, 0.8);
+  max-width: 520px;
+  line-height: 1.9;
+  margin: 0 auto 44px;
+  letter-spacing: 0.6px;
+  font-weight: 350;
+  font-family: var(--font-sans);
+}
+.hero-btn-row {
+  display: flex;
+  gap: 24px;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+/* ----- SECTIONS (Generous Heritage Spacing) ----- */
+section { padding: 200px 0; }
+.section-head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  margin-bottom: 80px;
+  gap: 20px;
+}
+.section-head h2 {
+  font-size: clamp(38px, 5vw, 64px);
+  letter-spacing: 0.5px;
+  font-weight: 800;
+  font-family: var(--font-display);
+  color: var(--color-text);
+}
+.section-head.left-align {
+  align-items: flex-start;
+  text-align: left;
+  flex-direction: row;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+.section-head.left-align > div { text-align: left; }
+.view-all {
+  font-size: 11px;
+  letter-spacing: 2.6px;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: var(--color-text);
+  border-bottom: 2px solid var(--color-primary);
+  padding-bottom: 8px;
+  transition: all 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.view-all:hover {
+  color: var(--color-primary);
+  letter-spacing: 3.6px;
+  border-bottom-color: var(--color-secondary-light);
+}
+
+/* ----- EYEBROW (Heritage Gold) ----- */
+.eyebrow {
+  font-size: 11px;
+  letter-spacing: 5.5px;
+  text-transform: uppercase;
+  color: var(--color-primary);
+  font-weight: 600;
+  display: block;
+  margin-bottom: 16px;
+  font-family: var(--font-sans);
+}
+.eyebrow.on-dark {
+  color: rgba(255, 255, 255, 0.5);
+  margin-bottom: 28px;
+}
+
+/* ----- PRODUCT GRID (Art Object Presentation) ----- */
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 48px 32px;
+}
+.carousel-wrap { position: relative; }
+.carousel-track {
+  display: flex;
+  gap: 32px;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  padding-bottom: 16px;
+  scrollbar-width: none;
+}
+.carousel-track::-webkit-scrollbar { display: none; }
+.carousel-track > * { flex: 0 0 280px; }
+
+/* ----- Staggered Entrance Animation (Heritage) ----- */
+.product-grid > div,
+.carousel-track > div {
+  opacity: 0;
+  animation: heritageReveal 1.1s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+.product-grid > div:nth-child(1) { animation-delay: 0.04s; }
+.product-grid > div:nth-child(2) { animation-delay: 0.08s; }
+.product-grid > div:nth-child(3) { animation-delay: 0.12s; }
+.product-grid > div:nth-child(4) { animation-delay: 0.16s; }
+.product-grid > div:nth-child(5) { animation-delay: 0.20s; }
+.product-grid > div:nth-child(6) { animation-delay: 0.24s; }
+.product-grid > div:nth-child(7) { animation-delay: 0.28s; }
+.product-grid > div:nth-child(8) { animation-delay: 0.32s; }
+
+@keyframes heritageReveal {
+  from { opacity: 0; transform: translateY(44px) scale(0.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* ----- COMPONENT OVERRIDES (Absolute Clarity) ----- */
+[class*="shadow"] { box-shadow: none !important; }
+[class*="rounded"] { border-radius: 0 !important; }
+[class*="bg-white"] { background-color: transparent !important; }
+
+/* Product Card - Heritage Art Object */
+.product-grid > div,
+.carousel-track > div {
+  transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.6s cubic-bezier(0.22, 1, 0.36, 1) !important;
+  will-change: transform;
+  border-radius: var(--radius-md) !important;
+  background: var(--color-surface) !important;
+  border: 1px solid var(--color-card-border);
+  padding: 0 0 24px 0;
+  box-shadow: var(--shadow-card) !important;
+}
+.product-grid > div:hover,
+.carousel-track > div:hover {
+  transform: translateY(-6px);
+  box-shadow: var(--shadow-hover) !important;
+}
+
+.product-grid img,
+.carousel-track img {
+  aspect-ratio: 3/4 !important;
+  object-fit: cover !important;
+  background: transparent !important;
+  width: 100%;
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0 !important;
+  transition: transform 0.8s cubic-bezier(0.22, 1, 0.36, 1) !important;
+  will-change: transform;
+  display: block;
+}
+.product-grid > div:hover img,
+.carousel-track > div:hover img {
+  transform: scale(1.025);
+}
+
+.product-grid h3,
+.carousel-track h3,
+.product-grid [class*="font-semibold"],
+.carousel-track [class*="font-semibold"] {
+  font-size: 17px !important;
+  font-weight: 800 !important;
+  margin-top: 24px !important;
+  margin-bottom: 4px !important;
+  letter-spacing: 0.3px !important;
+  font-family: var(--font-display) !important;
+  color: var(--color-text) !important;
+  padding: 0 20px !important;
+}
+.product-grid [class*="text-gray"],
+.carousel-track [class*="text-gray"],
+.product-grid [class*="price"],
+.carousel-track [class*="price"] {
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.4px !important;
+  color: var(--color-text-secondary) !important;
+  font-family: var(--font-sans) !important;
+  font-style: normal !important;
+  padding: 0 20px !important;
+}
+
+/* ----- CART PAGE (Heritage Refinement) ----- */
+.cart-grid {
+  display: grid;
+  grid-template-columns: 1.6fr 1fr;
+  gap: 64px;
+  align-items: start;
+  padding-bottom: 100px;
+}
+.cart-item {
+  display: flex;
+  gap: 24px;
+  padding: 32px 0;
+  border-bottom: 1px solid var(--color-border);
+  align-items: center;
+}
+.cart-item:first-of-type { border-top: 1px solid var(--color-border); }
+.cart-item img {
+  width: 100px;
+  height: 124px;
+  object-fit: cover;
+  background: transparent;
+  border-radius: var(--radius-sm);
+}
+.cart-item-info { flex: 1; }
+.cart-item-name {
+  font-size: 16px;
+  font-weight: 800;
+  margin-bottom: 6px;
+  font-family: var(--font-display);
+  color: var(--color-text);
+}
+.cart-item-meta {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  margin-bottom: 14px;
+  letter-spacing: .3px;
+}
+.cart-item-actions {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+.qty-control {
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: var(--color-background);
+}
+.qty-control button {
+  width: 48px;
+  height: 48px;
+  font-size: 16px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-text);
+  font-family: inherit;
+  transition: background 0.2s;
+}
+.qty-control button:hover { background: var(--color-border); }
+.qty-control button:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+  background: transparent;
+}
+.qty-control span {
+  width: 44px;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 600;
+}
+.remove-link {
+  font-size: 11.5px;
+  color: var(--color-text-secondary);
+  letter-spacing: .5px;
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 8px 16px;
+  font-family: inherit;
+  border-radius: var(--radius-sm);
+  transition: all 0.3s;
+}
+.remove-link:hover {
+  color: var(--color-primary);
+  background: rgba(200, 168, 76, 0.04);
+}
+.cart-item-price {
+  font-weight: 800;
+  font-size: 16px;
+  min-width: 76px;
+  text-align: right;
+  color: var(--color-text);
+}
+.clear-cart-btn {
+  display: inline-block;
+  margin-top: 24px;
+  font-size: 11.5px;
+  color: var(--color-text-secondary);
+  letter-spacing: .5px;
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 8px 20px;
+  font-family: inherit;
+  border-radius: var(--radius-sm);
+  transition: all 0.3s;
+}
+.clear-cart-btn:hover {
+  color: var(--color-text);
+  background: rgba(26, 26, 26, 0.02);
+}
+
+/* ----- SUMMARY CARD (Heritage Elevated) ----- */
+.summary-card {
+  border: 1px solid var(--color-card-border);
+  padding: 40px;
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+}
+.summary-card h3 {
+  font-size: 20px;
+  margin-bottom: 28px;
+  font-weight: 800;
+  font-family: var(--font-display);
+  color: var(--color-text);
+}
+.summary-item {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13.5px;
+  margin-bottom: 14px;
+  color: var(--color-text);
+  font-weight: 400;
+}
+.summary-divider {
+  height: 1px;
+  background: var(--color-border);
+  margin: 20px 0;
+}
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13.5px;
+  margin-bottom: 16px;
+  color: var(--color-text-secondary);
+}
+.summary-row.total {
+  font-weight: 800;
+  color: var(--color-text);
+  font-size: 18px;
+  border-top: 1px solid var(--color-border);
+  padding-top: 22px;
+  margin-top: 10px;
+}
+
+/* ----- CHECKOUT PAGE (Heritage Refined) ----- */
+.checkout-steps {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 44px;
+  font-size: 11px;
+  letter-spacing: 1.8px;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+  flex-wrap: wrap;
+  font-weight: 600;
+}
+.checkout-steps .step.active {
+  color: var(--color-primary);
+  font-weight: 800;
+}
+.checkout-grid {
+  display: grid;
+  grid-template-columns: 1.6fr 1fr;
+  gap: 64px;
+  align-items: start;
+}
+.info-banner {
+  padding: 18px 24px;
+  background: var(--color-border);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  margin-bottom: 28px;
+  font-size: 13px;
+  color: var(--color-text);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-weight: 400;
+}
+.info-banner.muted { background: transparent; border-color: transparent; padding-left: 0; }
+.toggle-label {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  font-weight: 600;
+}
+.toggle-label input {
+  accent-color: var(--color-primary);
+  width: 18px;
+  height: 18px;
+}
+.edit-btn {
+  color: var(--color-text);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  cursor: pointer;
+  background: none;
+  border: none;
+  font-family: inherit;
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  transition: background 0.2s;
+}
+.edit-btn:hover { background: rgba(26, 26, 26, 0.02); }
+.form-card {
+  border: 1px solid var(--color-border);
+  padding: 40px;
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  margin-bottom: 28px;
+  box-shadow: var(--shadow-card);
+}
+.form-card h3 {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 2.4px;
+  color: var(--color-text-secondary);
+  font-family: var(--font-sans);
+  font-weight: 600;
+  margin-bottom: 28px;
+}
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  margin-bottom: 18px;
+}
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+.form-row .form-group { margin-bottom: 0; }
+.form-group label {
+  font-size: 10px;
+  letter-spacing: 1.6px;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+  font-weight: 600;
+}
+.form-group input,
+.form-group select {
+  border: 1px solid var(--color-border);
+  padding: 14px 16px;
+  font-size: 13.5px;
+  outline: none;
+  transition: all 0.3s ease;
+  background: var(--color-background);
+  font-weight: 400;
+  font-family: inherit;
+  color: var(--color-text);
+  width: 100%;
+  box-sizing: border-box;
+  border-radius: var(--radius-sm);
+}
+.form-group input:focus,
+.form-group select:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-shadow);
+  background: var(--color-surface);
+}
+
+/* ----- PRODUCT DETAIL (Heritage Editorial) ----- */
+.pd-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 80px;
+  padding: 40px 0 100px;
+}
+.pd-info .eyebrow {
+  margin-bottom: 18px;
+}
+.pd-info h1 {
+  font-size: clamp(38px, 4vw, 56px);
+  margin-bottom: 20px;
+  letter-spacing: 0.5px;
+  font-weight: 800;
+  font-family: var(--font-display);
+  color: var(--color-text);
+  line-height: 1.1;
+}
+.pd-price {
+  font-size: 22px;
+  font-weight: 800;
+  margin-bottom: 28px;
+  color: var(--color-primary);
+  letter-spacing: 0.5px;
+  font-family: var(--font-display);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.pd-price .was {
+  color: var(--color-text-secondary);
+  text-decoration: line-through;
+  font-size: 17px;
+  font-weight: 400;
+}
+.pd-price .discount-tag {
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  font-size: 10px;
+  letter-spacing: 1.8px;
+  padding: 6px 14px;
+  text-transform: uppercase;
+  font-weight: 600;
+  font-family: var(--font-sans);
+  border-radius: var(--radius-sm);
+}
+.pd-desc {
+  font-size: 15px;
+  color: var(--color-text-secondary);
+  line-height: 2;
+  margin-bottom: 40px;
+  font-weight: 400;
+  max-width: 480px;
+}
+.pd-desc p { margin-bottom: 1em; }
+.pd-actions {
+  display: flex;
+  gap: 16px;
+  margin-top: 40px;
+  align-items: center;
+}
+.pd-gallery-override img {
+  background: transparent;
+  object-fit: cover;
+  border-radius: var(--radius-md);
+}
+.share-override button,
+.share-override [role="button"] {
+  width: 60px !important;
+  height: 60px !important;
+  border: 1px solid var(--color-border) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 18px !important;
+  flex-shrink: 0 !important;
+  transition: all 0.4s cubic-bezier(0.22, 1, 0.36, 1) !important;
+  border-radius: 50% !important;
+  background: transparent !important;
+  color: var(--color-text) !important;
+}
+.share-override button:hover,
+.share-override [role="button"]:hover {
+  background: var(--color-text) !important;
+  color: var(--color-background) !important;
+  transform: scale(1.06);
+  border-color: var(--color-text) !important;
+}
+.related-override h2,
+.related-override h3 {
+  font-size: clamp(32px, 4vw, 44px) !important;
+  margin-bottom: 40px !important;
+  font-weight: 800 !important;
+  text-align: center !important;
+  font-family: var(--font-display) !important;
+  color: var(--color-text) !important;
+}
+.related-override > div > div {
+  display: grid !important;
+  grid-template-columns: repeat(4, 1fr) !important;
+  gap: 48px 32px !important;
+}
+.related-override img {
+  aspect-ratio: 3/4 !important;
+  object-fit: cover !important;
+  background: transparent !important;
+  width: 100%;
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0 !important;
+}
+.related-override [class*="font-semibold"] {
+  font-size: 17px !important;
+  font-weight: 800 !important;
+  margin-top: 24px !important;
+  margin-bottom: 4px !important;
+  letter-spacing: 0.3px !important;
+  font-family: var(--font-display) !important;
+  color: var(--color-text) !important;
+  padding: 0 16px !important;
+}
+.related-override [class*="text-gray"],
+.related-override [class*="text-primary"] {
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.4px !important;
+  color: var(--color-text-secondary) !important;
+  font-family: var(--font-sans) !important;
+  font-style: normal !important;
+  padding: 0 16px !important;
+}
+
+/* ----- RESPONSIVE (Preserved & Enhanced for 200px spacing) ----- */
+@media (max-width: 1100px) {
+  .product-grid { grid-template-columns: repeat(3, 1fr); gap: 36px 24px; }
+  .container { padding: 0 40px; }
+  .cart-grid { grid-template-columns: 1fr; gap: 40px; }
+  .checkout-grid { grid-template-columns: 1fr; gap: 40px; }
+  .pd-grid { grid-template-columns: 1fr; gap: 40px; padding: 20px 0 60px; }
+  .related-override > div > div { grid-template-columns: repeat(3, 1fr) !important; gap: 36px 24px !important; }
+  section { padding: 120px 0; }
+}
+@media (max-width: 820px) {
+  .hero-content h1 { font-size: 44px; letter-spacing: 4px; }
+  .hero-grid img { height: 70vh; }
+  .hero { border-radius: 0 0 var(--radius-lg) var(--radius-lg); }
+  .hero-content p { font-size: 15px; }
+  .product-grid { grid-template-columns: repeat(2, 1fr); gap: 28px 16px; }
+  .container { padding: 0 24px; }
+  section { padding: 80px 0; }
+  .section-head { margin-bottom: 48px; }
+  .cart-item {
+    align-items: flex-start;
+    flex-direction: column;
+    position: relative;
+    padding: 24px 0;
+  }
+  .cart-item img { width: 80px; height: 100px; margin-right: 16px; }
+  .cart-item-price { position: absolute; top: 24px; right: 0; }
+  .form-row { grid-template-columns: 1fr; gap: 0; }
+  .related-override > div > div {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 24px 14px !important;
+  }
+  .breadcrumb span::before { margin: 0 8px; }
+  .page-title { font-size: 32px; }
+}
+@media (max-width: 520px) {
+  .hero-content { padding: 0 20px; }
+  .hero-content h1 { font-size: 28px; letter-spacing: 2px; }
+  .hero-content p { font-size: 13px; }
+  .hero-btn-row { flex-direction: column; width: 100%; }
+  .hero-btn-row .btn { width: 100%; justify-content: center; }
+  .hero .floating-badge { font-size: 8px; padding: 4px 14px; }
+  .product-grid { grid-template-columns: repeat(2, 1fr); gap: 20px 12px; }
+  .section-head { margin-bottom: 32px; }
+  .section-head h2 { font-size: 28px; }
+  section { padding: 56px 0; }
+  .btn { padding: 14px 24px; font-size: 10px; }
+  .page-title { font-size: 24px; margin: 8px 0 24px; }
+  .cart-item img { width: 64px; height: 80px; }
+  .qty-control button { width: 40px; height: 40px; }
+  .qty-control span { width: 36px; }
+  .summary-card, .form-card { padding: 24px; }
+}
+@media (min-width: 1700px) {
+  .container { max-width: 1600px; }
+}
+
+/* ----- ADDITIONAL: Premium Focus & Scroll ----- */
+*:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 3px;
+}
+html { scroll-behavior: smooth; }
+
+/* ----- Ensure hero doesn't get staggered animation ----- */
+.hero { animation: none !important; }
+.product-grid > div, .carousel-track > div {
+  animation: heritageReveal 1.1s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}

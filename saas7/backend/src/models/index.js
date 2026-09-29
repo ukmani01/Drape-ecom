@@ -1,0 +1,19 @@
+// ✅ Correct – Only ONE Counter export
+export { default as ActivityLog } from './ActivityLog.js';
+export { default as Cart } from './Cart.js';
+export { default as Category } from './Category.js';
+export { default as Counter } from './Counter.js';   // ✅ Only ONE
+export { default as Coupon } from './Coupon.js';
+export { default as Customer } from './Customer.js';
+export { default as Notification } from './Notification.js';
+export { default as Order } from './Order.js';
+export { default as Plan } from './Plan.js';
+export { default as Product } from './Product.js';
+export { default as RecentlyViewed } from './RecentlyViewed.js';
+export { default as Review } from './Review.js';
+export { default as Settings } from './Settings.js';
+export { default as Store } from './Store.js';
+export { default as Subscription } from './Subscription.js';
+export { default as Theme } from './Theme.js';
+export { default as User } from './User.js';
+export { default as Wishlist } from './Wishlist.js';

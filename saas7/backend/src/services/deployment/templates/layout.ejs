@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="<%= store.language || 'en' %>">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= store.name %> - <%= settings?.seo?.title || 'Online Store' %></title>
+  <meta name="description" content="<%= settings?.seo?.description || store.name %>">
+  <link rel="icon" href="<%= store.favicon || '' %>">
+  <meta property="og:title" content="<%= store.name %>">
+  <meta property="og:description" content="<%= settings?.seo?.description || store.name %>">
+  <meta property="og:image" content="<%= store.logo || settings?.brand?.logo || '' %>">
+  <meta property="og:url" content="<%= `${baseUrl}/stores/${store.slug}` %>">
+  <meta property="og:type" content="website">
+  <link rel="stylesheet" href="/stores/<%= store.slug %>/assets/global.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root { --primary-color: <%= settings?.styling?.primaryColor || '#f97316' %>; --secondary-color: <%= settings?.styling?.secondaryColor || '#1a1509' %>; }
+  </style>
+
+  <!-- ================================================================ -->
+  <!-- ✅ FIX: STORE CONFIG IN HEAD (Runs BEFORE app.js)               -->
+  <!-- ================================================================ -->
+  <script>
+    window.__STORE_CONFIG__ = {
+      storeSlug: '<%= store.slug %>',
+      storeId: '<%= store._id %>',
+      apiBase: '/api',
+      currency: '<%= store.currency || "INR" %>',
+    };
+    console.log('✅ [layout] __STORE_CONFIG__ defined in HEAD:', window.__STORE_CONFIG__);
+  </script>
+</head>
+<body>
+  <header class="store-header">
+    <div class="container">
+      <div class="header-inner">
+        <div class="logo">
+          <a href="/stores/<%= store.slug %>">
+            <% if (store.logo || settings?.brand?.logo) { %>
+              <img src="<%= store.logo || settings?.brand?.logo %>" alt="<%= store.name %>">
+            <% } else { %>
+              <span class="logo-text"><%= store.name %></span>
+            <% } %>
+          </a>
+        </div>
+        <nav class="header-nav">
+          <a href="/stores/<%= store.slug %>">Home</a>
+          <a href="/stores/<%= store.slug %>/products.html">Products</a>
+          <a href="/stores/<%= store.slug %>/cart.html">Cart</a>
+          <a href="/stores/<%= store.slug %>/orders.html">Orders</a>
+        </nav>
+        <div class="header-actions">
+          <a href="/stores/<%= store.slug %>/cart.html" class="cart-icon">
+            🛒 <span id="cart-count">0</span>
+          </a>
+          <div id="auth-buttons">
+            <a href="/stores/<%= store.slug %>/login.html">Login</a>
+            <a href="/stores/<%= store.slug %>/register.html">Register</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <%- content %>
+  </main>
+
+  <footer class="store-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <h3><%= settings?.brand?.name || store.name %></h3>
+          <p><%= settings?.brand?.tagline || 'Premium online store' %></p>
+        </div>
+        <div class="footer-links">
+          <h4>Quick Links</h4>
+          <ul>
+            <li><a href="/stores/<%= store.slug %>">Home</a></li>
+            <li><a href="/stores/<%= store.slug %>/products.html">Products</a></li>
+            <li><a href="/stores/<%= store.slug %>/cart.html">Cart</a></li>
+            <li><a href="/stores/<%= store.slug %>/orders.html">Orders</a></li>
+          </ul>
+        </div>
+        <div class="footer-contact">
+          <h4>Contact</h4>
+          <% if (settings?.footer?.address) { %>
+            <p>📍 <%= settings.footer.address %></p>
+          <% } %>
+          <% if (settings?.footer?.phone) { %>
+            <p>📞 <a href="tel:<%= settings.footer.phone %>"><%= settings.footer.phone %></a></p>
+          <% } %>
+          <% if (settings?.footer?.email) { %>
+            <p>✉️ <a href="mailto:<%= settings.footer.email %>"><%= settings.footer.email %></a></p>
+          <% } %>
+        </div>
+        <div class="footer-social">
+          <h4>Follow Us</h4>
+          <div class="social-links">
+            <% if (settings?.footer?.socialLinks?.facebook) { %>
+              <a href="<%= settings.footer.socialLinks.facebook %>" target="_blank">📘</a>
+            <% } %>
+            <% if (settings?.footer?.socialLinks?.instagram) { %>
+              <a href="<%= settings.footer.socialLinks.instagram %>" target="_blank">📷</a>
+            <% } %>
+            <% if (settings?.footer?.socialLinks?.twitter) { %>
+              <a href="<%= settings.footer.socialLinks.twitter %>" target="_blank">🐦</a>
+            <% } %>
+            <% if (settings?.footer?.socialLinks?.youtube) { %>
+              <a href="<%= settings.footer.socialLinks.youtube %>" target="_blank">▶️</a>
+            <% } %>
+          </div>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p><%= settings?.footer?.copyright || `© ${new Date().getFullYear()} ${settings?.brand?.name || store.name}. All rights reserved.` %></p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ================================================================ -->
+  <!-- ✅ app.js LOADS AT THE VERY END                                  -->
+  <!-- ================================================================ -->
+  <script src="/stores/<%= store.slug %>/assets/app.js?v=3"></script>
+</body>
+</html>

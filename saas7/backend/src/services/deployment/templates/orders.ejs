@@ -1,0 +1,90 @@
+<section class="orders-history-page">
+  <div class="container">
+    <h1>My Orders</h1>
+    <div id="orders-list"><p>Loading your orders...</p></div>
+  </div>
+</section>
+
+<style>
+  .orders-history-page { padding: 60px 0; }
+  .orders-history-page h1 { font-family: var(--font-display); font-size: 36px; margin-bottom: 32px; }
+  .order-item { background: var(--white); padding: 16px; border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 16px; }
+  .order-item .order-header { display: flex; justify-content: space-between; font-weight: 600; }
+  .order-item .order-details { margin-top: 8px; }
+  .order-item .order-details ul { padding-left: 20px; margin-top: 4px; }
+</style>
+
+<script>
+  (function() {
+    'use strict';
+
+    console.log('📦 [My Orders] Loading...');
+
+    var token = localStorage.getItem('accessToken');
+
+    if (!token) {
+      document.getElementById('orders-list').innerHTML = '<p>Please <a href="/stores/<%= store.slug %>/login.html">login</a> to view your orders.</p>';
+      return;
+    }
+
+    var headers = { 'Authorization': 'Bearer ' + token };
+    var url = '/api/public/orders?storeSlug=<%= store.slug %>&_=' + Date.now();
+
+    fetch(url, { headers: headers })
+      .then(function(res) {
+        if (res.status === 401) {
+          document.getElementById('orders-list').innerHTML = '<p>Please <a href="/stores/<%= store.slug %>/login.html">login</a> again.</p>';
+          return;
+        }
+        if (!res.ok) {
+          document.getElementById('orders-list').innerHTML = '<p>Failed to load orders.</p>';
+          return;
+        }
+        return res.json();
+      })
+      .then(function(data) {
+        if (!data) return;
+        var orders = data.data || [];
+        
+        if (orders.length === 0) {
+          document.getElementById('orders-list').innerHTML = '<p>You have no orders yet.</p>';
+          return;
+        }
+
+        var html = '';
+        orders.forEach(function(order) {
+          var itemsHtml = '<ul>';
+          order.items.forEach(function(item) {
+            itemsHtml += '<li>' + item.name + ' × ' + item.quantity + '</li>';
+          });
+          itemsHtml += '</ul>';
+
+          var orderDate = new Date(order.createdAt).toLocaleDateString('en-IN', {
+            year: 'numeric', month: 'short', day: 'numeric'
+          });
+
+          html += `
+            <div class="order-item">
+              <div class="order-header">
+                <span>#${order.orderId}</span>
+                <span>₹${order.total}</span>
+                <span style="color:#f97316;font-weight:600;">${order.orderStatus}</span>
+                <span>${orderDate}</span>
+              </div>
+              <div class="order-details">
+                ${itemsHtml}
+              </div>
+            </div>
+          `;
+        });
+
+        document.getElementById('orders-list').innerHTML = html;
+        console.log('✅ Orders loaded:', orders.length);
+      })
+      .catch(function(err) {
+        console.error('Error loading orders:', err);
+        document.getElementById('orders-list').innerHTML = '<p>Error loading orders.</p>';
+      });
+
+  })();
+</script>

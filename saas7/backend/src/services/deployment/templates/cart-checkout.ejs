@@ -1,0 +1,503 @@
+<!-- ============================================================= -->
+<!-- 📦 VERSION 3.2 - FINAL (Badge Fix + Cache Busting)          -->
+<!-- 🔥 FIX: Cart badge shows 0 when empty                         -->
+<!-- 🔥 FIX: Immediate badge reset on page load                   -->
+<!-- 📅 Date: 27-Jul-2026                                        -->
+<!-- ============================================================= -->
+
+<section class="cart-checkout-page">
+  <div class="container">
+    <div class="page-header"><h1><%= title %></h1></div>
+    <% if (page === 'cart') { %>
+      <!-- CART PAGE -->
+      <div class="cart-container" id="cart-container">
+        <div class="cart-items" id="cart-items"><p class="empty-cart">Your cart is empty.</p></div>
+        <div class="cart-summary" id="cart-summary" style="display:none;">
+          <h3>Order Summary</h3>
+          <div class="summary-row"><span>Subtotal</span><span id="subtotal">₹0</span></div>
+          <div class="summary-row"><span>Shipping</span><span id="shipping">₹0</span></div>
+          <div class="summary-row total"><span>Total</span><span id="total">₹0</span></div>
+          <a href="/stores/<%= store.slug %>/checkout.html" class="checkout-btn">Proceed to Checkout</a>
+        </div>
+      </div>
+    <% } else { %>
+      <!-- CHECKOUT PAGE -->
+      <div class="checkout-container">
+        <form id="checkout-form" onsubmit="return window.checkoutPlaceOrder(event);">
+          <div class="checkout-layout">
+            <div class="checkout-form">
+              <h3>Shipping Address</h3>
+              <div class="form-row">
+                <div class="form-group"><label>First Name *</label><input type="text" id="firstName" required></div>
+                <div class="form-group"><label>Last Name *</label><input type="text" id="lastName" required></div>
+              </div>
+              <div class="form-group">
+                <label>Email *</label>
+                <input type="email" id="email" required readonly style="background:#f5f5f5;cursor:not-allowed;">
+              </div>
+              <div class="form-group"><label>Phone *</label><input type="tel" id="phone" required></div>
+              <div class="form-group"><label>Address Line 1 *</label><input type="text" id="line1" required></div>
+              <div class="form-group"><label>Address Line 2</label><input type="text" id="line2"></div>
+              <div class="form-row">
+                <div class="form-group"><label>City *</label><input type="text" id="city" required></div>
+                <div class="form-group"><label>State *</label><input type="text" id="state" required></div>
+              </div>
+              <div class="form-row">
+                <div class="form-group"><label>Pincode *</label><input type="text" id="pincode" required></div>
+                <div class="form-group"><label>Country</label><input type="text" id="country" value="India"></div>
+              </div>
+              <h3>Payment Method</h3>
+              <div class="payment-methods">
+                <label><input type="radio" name="paymentMethod" value="COD" checked> Cash on Delivery</label>
+                <label><input type="radio" name="paymentMethod" value="Razorpay"> Card / UPI</label>
+              </div>
+            </div>
+
+            <div class="checkout-summary">
+              <h3>Order Summary</h3>
+              <div id="order-items"><p>Loading cart...</p></div>
+              <div class="summary-divider"></div>
+              <div class="summary-row"><span>Subtotal</span><span id="checkout-subtotal">₹0</span></div>
+              <div class="summary-row"><span>Shipping</span><span id="checkout-shipping">₹0</span></div>
+              <div class="summary-row total"><span>Total</span><span id="checkout-total">₹0</span></div>
+              <button type="submit" class="place-order-btn">Place Order</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    <% } %>
+  </div>
+</section>
+
+<script>
+  (function() {
+    'use strict';
+
+    console.log('🛒 [CART/CHECKOUT] V3.2 Initializing...');
+
+    // =============================================================
+    // 🔥 IMMEDIATE BADGE RESET (before any API calls)
+    // =============================================================
+    (function resetBadgeImmediately() {
+      const badge = document.getElementById('cart-count');
+      if (badge) {
+        badge.textContent = '0';
+        console.log('✅ Badge reset to 0 on page load (temporary)');
+      }
+    })();
+
+    const STORE_SLUG = '<%= store.slug %>';
+    const API_BASE = '/api';
+    const CART_API = API_BASE + '/public/cart';
+    const ORDERS_API = API_BASE + '/public/orders';
+
+    // =============================================================
+    // ✅ HELPERS
+    // =============================================================
+    function getToken() {
+      return localStorage.getItem('accessToken');
+    }
+
+    function getHeaders(contentType) {
+      const headers = {};
+      if (contentType) headers['Content-Type'] = contentType;
+      const token = getToken();
+      if (token) headers['Authorization'] = 'Bearer ' + token;
+      return headers;
+    }
+
+    function formatCurrency(amount) {
+      return '₹' + (amount || 0).toLocaleString('en-IN');
+    }
+
+    function updateBadge(count) {
+      const badge = document.getElementById('cart-count');
+      if (badge) {
+        badge.textContent = count || 0;
+        console.log(`🖌️ Badge updated to: ${count || 0}`);
+      }
+    }
+
+    function updateTotals(subtotal, shipping, total) {
+      const el1 = document.getElementById('checkout-subtotal');
+      const el2 = document.getElementById('checkout-shipping');
+      const el3 = document.getElementById('checkout-total');
+      if (el1) el1.textContent = formatCurrency(subtotal);
+      if (el2) el2.textContent = formatCurrency(shipping);
+      if (el3) el3.textContent = formatCurrency(total);
+    }
+
+    // =============================================================
+    // ✅ LOAD CART
+    // =============================================================
+    async function loadCart() {
+      console.log('🔄 [CART] Loading...');
+
+      if (sessionStorage.getItem('orderPlaced') === 'true') {
+        console.log('🛒 Order placed detected! Clearing cart UI...');
+        sessionStorage.removeItem('orderPlaced');
+        const container = document.getElementById('cart-items');
+        const summary = document.getElementById('cart-summary');
+        if (container) container.innerHTML = '<p class="empty-cart">Your cart is empty.</p>';
+        if (summary) summary.style.display = 'none';
+        updateBadge(0);
+        const orderItems = document.getElementById('order-items');
+        if (orderItems) orderItems.innerHTML = '<p>Your cart is empty.</p>';
+        updateTotals(0, 0, 0);
+        return;
+      }
+
+      try {
+        const token = getToken();
+        if (!token) {
+          const container = document.getElementById('cart-items');
+          if (container) container.innerHTML = '<p class="empty-cart">Please login to view your cart.</p>';
+          const summary = document.getElementById('cart-summary');
+          if (summary) summary.style.display = 'none';
+          const orderItems = document.getElementById('order-items');
+          if (orderItems) orderItems.innerHTML = '<p>Please login.</p>';
+          updateTotals(0, 0, 0);
+          updateBadge(0);
+          return;
+        }
+
+        const headers = getHeaders();
+        const url = CART_API + '?storeSlug=' + STORE_SLUG + '&_=' + Date.now();
+        const res = await fetch(url, { headers });
+
+        if (res.status === 401) {
+          const container = document.getElementById('cart-items');
+          if (container) container.innerHTML = '<p class="empty-cart">Please login.</p>';
+          if (summary) summary.style.display = 'none';
+          updateBadge(0);
+          return;
+        }
+
+        if (!res.ok) {
+          const container = document.getElementById('cart-items');
+          if (container) container.innerHTML = '<p class="empty-cart">Failed to load.</p>';
+          if (summary) summary.style.display = 'none';
+          updateBadge(0);
+          return;
+        }
+
+        const data = await res.json();
+        const cart = data.data || data || {};
+        const items = cart.items || [];
+
+        console.log('📦 Items found:', items.length);
+
+        // --- Render Cart Page ---
+        const container = document.getElementById('cart-items');
+        const summary = document.getElementById('cart-summary');
+
+        if (container) {
+          if (items.length === 0) {
+            container.innerHTML = '<p class="empty-cart">Your cart is empty.</p>';
+            if (summary) summary.style.display = 'none';
+            updateBadge(0);
+          } else {
+            if (summary) summary.style.display = 'block';
+            let html = '';
+            let subtotal = 0;
+
+            items.forEach(item => {
+              const price = parseFloat(item.price) || 0;
+              const qty = parseInt(item.quantity) || 1;
+              const total = price * qty;
+              subtotal += total;
+              const productId = item.productId?._id || item.productId || item.id || '';
+
+              html += `
+                <div class="cart-item" data-product-id="${productId}">
+                  <img src="${item.image || '/placeholder.jpg'}" alt="${item.name || 'Product'}">
+                  <div class="cart-item-info">
+                    <h4>${item.name || 'Product'}</h4>
+                    <p>${formatCurrency(price)} × ${qty}</p>
+                  </div>
+                  <div class="cart-item-actions">
+                    <button onclick="updateCartItem('${productId}', ${qty - 1})">−</button>
+                    <span>${qty}</span>
+                    <button onclick="updateCartItem('${productId}', ${qty + 1})">+</button>
+                    <button onclick="removeCartItem('${productId}')" class="remove-btn">✕</button>
+                  </div>
+                  <div class="cart-item-total">${formatCurrency(total)}</div>
+                </div>
+              `;
+            });
+
+            container.innerHTML = html;
+            const shipping = subtotal > 0 ? 99 : 0;
+            const total = subtotal + shipping;
+            document.getElementById('subtotal').textContent = formatCurrency(subtotal);
+            document.getElementById('shipping').textContent = formatCurrency(shipping);
+            document.getElementById('total').textContent = formatCurrency(total);
+            updateBadge(items.length);
+          }
+        }
+
+        // --- Render Checkout Page ---
+        const orderItemsContainer = document.getElementById('order-items');
+        if (orderItemsContainer) {
+          if (items.length === 0) {
+            orderItemsContainer.innerHTML = '<p>Your cart is empty.</p>';
+            updateTotals(0, 0, 0);
+            updateBadge(0);
+          } else {
+            let html = '';
+            let subtotal = 0;
+            items.forEach(item => {
+              const price = parseFloat(item.price) || 0;
+              const qty = parseInt(item.quantity) || 1;
+              const total = price * qty;
+              subtotal += total;
+              html += `<div class="summary-item"><span>${item.name || 'Product'} × ${qty}</span><span>${formatCurrency(total)}</span></div>`;
+            });
+            orderItemsContainer.innerHTML = html;
+            const shipping = subtotal > 0 ? 99 : 0;
+            const total = subtotal + shipping;
+            updateTotals(subtotal, shipping, total);
+            
+            window.__checkoutCart = { items: items, subtotal: subtotal, shipping: shipping, total: total };
+            console.log('✅ __checkoutCart saved with items:', items.length);
+            updateBadge(items.length);
+          }
+        }
+
+      } catch (error) {
+        console.error('❌ Load error:', error);
+        const container = document.getElementById('cart-items');
+        if (container) container.innerHTML = '<p class="empty-cart">Error loading.</p>';
+        const summary = document.getElementById('cart-summary');
+        if (summary) summary.style.display = 'none';
+        updateBadge(0);
+      }
+    }
+
+    // =============================================================
+    // ✅ AUTO-FILL: Name & Email
+    // =============================================================
+    async function autoFillUserDetails() {
+      try {
+        const token = getToken();
+        if (!token) return;
+
+        const res = await fetch('/api/auth/me', {
+          headers: { 'Authorization': 'Bearer ' + token }
+        });
+        if (!res.ok) return;
+
+        const data = await res.json();
+        const user = data.data?.user;
+        if (!user) return;
+
+        const emailField = document.getElementById('email');
+        if (emailField) {
+          emailField.value = user.email || '';
+          emailField.setAttribute('readonly', 'readonly');
+          emailField.style.backgroundColor = '#f5f5f5';
+          emailField.style.cursor = 'not-allowed';
+        }
+
+        if (user.name) {
+          const parts = user.name.split(' ');
+          const firstNameField = document.getElementById('firstName');
+          const lastNameField = document.getElementById('lastName');
+          if (firstNameField && parts[0]) firstNameField.value = parts[0];
+          if (lastNameField && parts.length > 1) lastNameField.value = parts.slice(1).join(' ');
+        }
+      } catch (e) {
+        console.warn('Auto-fill error:', e);
+      }
+    }
+
+    // =============================================================
+    // ✅ UPDATE / REMOVE (Globals)
+    // =============================================================
+    window.updateCartItem = async function(productId, quantity) {
+      if (quantity <= 0) { await removeCartItem(productId); return; }
+      try {
+        const token = getToken();
+        if (!token) { alert('Please login.'); return; }
+        const headers = getHeaders('application/json');
+        const url = CART_API + '?_=' + Date.now();
+        const res = await fetch(url, {
+          method: 'PUT',
+          headers,
+          body: JSON.stringify({ productId, quantity, storeSlug: STORE_SLUG })
+        });
+        if (res.ok) await loadCart();
+        else { const err = await res.json(); alert('Update failed: ' + (err.message || 'Try again.')); }
+      } catch (e) { console.error('Update error:', e); alert('Error updating.'); }
+    };
+
+    window.removeCartItem = async function(productId) {
+      try {
+        const token = getToken();
+        if (!token) { alert('Please login.'); return; }
+        const headers = getHeaders();
+        const url = CART_API + '/' + productId + '?storeSlug=' + STORE_SLUG + '&_=' + Date.now();
+        const res = await fetch(url, { method: 'DELETE', headers });
+        if (res.ok) await loadCart();
+        else { const err = await res.json(); alert('Remove failed: ' + (err.message || 'Try again.')); }
+      } catch (e) { console.error('Remove error:', e); alert('Error removing.'); }
+    };
+
+    // =============================================================
+    // ✅ PLACE ORDER (ULTIMATE FIX - NO PAGE RELOAD)
+    // =============================================================
+    window.checkoutPlaceOrder = async function(event) {
+      if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+
+      console.log('🚀 [checkoutPlaceOrder] Function called!');
+
+      try {
+        const firstName = document.getElementById('firstName')?.value?.trim() || '';
+        const lastName = document.getElementById('lastName')?.value?.trim() || '';
+        const email = document.getElementById('email')?.value?.trim() || '';
+        const phone = document.getElementById('phone')?.value?.trim() || '';
+        const line1 = document.getElementById('line1')?.value?.trim() || '';
+        const line2 = document.getElementById('line2')?.value?.trim() || '';
+        const city = document.getElementById('city')?.value?.trim() || '';
+        const state = document.getElementById('state')?.value?.trim() || '';
+        const pincode = document.getElementById('pincode')?.value?.trim() || '';
+        const country = document.getElementById('country')?.value?.trim() || 'India';
+        const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked')?.value || 'COD';
+
+        if (!firstName || !line1 || !city || !state || !pincode || !phone) {
+          alert('Please fill all required fields.');
+          return false;
+        }
+
+        let cartData = window.__checkoutCart || { items: [], subtotal: 0, shipping: 99, total: 0 };
+
+        if (!cartData.items || cartData.items.length === 0) {
+          console.warn('⚠️ __checkoutCart is empty! Fetching cart directly from API...');
+          try {
+            const token = getToken();
+            if (!token) { alert('Please login.'); return false; }
+            const headers = getHeaders();
+            const url = CART_API + '?storeSlug=' + STORE_SLUG + '&_=' + Date.now();
+            const res = await fetch(url, { headers });
+            if (!res.ok) throw new Error('Failed to fetch cart');
+            const data = await res.json();
+            const items = data.data?.items || [];
+            if (items.length === 0) {
+              alert('Your cart is empty.');
+              return false;
+            }
+            let subtotal = 0;
+            items.forEach(item => {
+              subtotal += (parseFloat(item.price) || 0) * (parseInt(item.quantity) || 1);
+            });
+            const shipping = subtotal > 0 ? 99 : 0;
+            const total = subtotal + shipping;
+            cartData = { items, subtotal, shipping, total };
+            window.__checkoutCart = cartData;
+            console.log('✅ Fallback fetch successful. Items:', items.length);
+          } catch (err) {
+            console.error('❌ Fallback fetch error:', err);
+            alert('Could not load cart. Please refresh and try again.');
+            return false;
+          }
+        }
+
+        if (!cartData.items || cartData.items.length === 0) {
+          alert('Cart is empty.');
+          return false;
+        }
+
+        const orderItems = cartData.items.map(item => ({
+          productId: item.productId?._id || item.productId,
+          name: item.name || 'Product',
+          quantity: parseInt(item.quantity) || 1,
+          price: parseFloat(item.price) || 0,
+          sku: item.sku || '',
+          variant: item.variant || '',
+          image: item.image || ''
+        }));
+
+        const body = JSON.stringify({
+          storeSlug: STORE_SLUG,
+          items: orderItems,
+          subtotal: cartData.subtotal,
+          shippingFee: cartData.shipping,
+          total: cartData.total,
+          shippingAddress: {
+            name: firstName + ' ' + lastName,
+            email: email,
+            phone: phone,
+            line1: line1,
+            line2: line2,
+            city: city,
+            state: state,
+            pincode: pincode,
+            country: country
+          },
+          billingAddress: {
+            name: firstName + ' ' + lastName,
+            email: email,
+            phone: phone,
+            line1: line1,
+            line2: line2,
+            city: city,
+            state: state,
+            pincode: pincode,
+            country: country
+          },
+          paymentMethod: paymentMethod
+        });
+
+        console.log('📦 Sending Order Body:', JSON.parse(body));
+
+        const token = getToken();
+        if (!token) { alert('Please login.'); return false; }
+        const headers = getHeaders('application/json');
+        const res = await fetch(ORDERS_API, { method: 'POST', headers, body });
+
+        if (res.ok) {
+          const data = await res.json();
+          sessionStorage.setItem('orderPlaced', 'true');
+          updateBadge(0);
+          localStorage.removeItem('cartItems');
+          alert('✅ Order placed successfully!');
+          const orderId = data.data?.orderId || data.orderId;
+          window.location.href = '/stores/' + STORE_SLUG + '/order-confirmation.html?orderId=' + orderId;
+        } else {
+          const err = await res.json();
+          console.error('❌ Order failed:', err);
+          if (res.status === 401) alert('Please login.');
+          else alert('❌ Failed: ' + (err.message || 'Try again.'));
+        }
+      } catch (err) {
+        console.error('Order error:', err);
+        alert('Error placing order.');
+      }
+
+      return false;
+    };
+
+    // =============================================================
+    // ✅ INIT
+    // =============================================================
+    document.addEventListener('DOMContentLoaded', function() {
+      loadCart();
+      autoFillUserDetails();
+      console.log('✅ V3.2 Checkout form ready.');
+    });
+
+    document.addEventListener('visibilitychange', function() {
+      if (!document.hidden) {
+        console.log('👀 Tab visible, reloading cart...');
+        loadCart();
+      }
+    });
+
+    console.log('✅ [V3.2 CART/CHECKOUT] Ready.');
+    window.__cartDebug = { loadCart: loadCart };
+
+  })();
+</script>

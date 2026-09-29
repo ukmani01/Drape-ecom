@@ -1,0 +1,104 @@
+<section class="order-confirmation-page">
+  <div class="container">
+    <h1>🎉 Order Placed Successfully!</h1>
+    <p>Your order has been confirmed. We'll notify you once it ships.</p>
+    <div id="order-details"><p>Loading order details...</p></div>
+    <a href="/stores/<%= store.slug %>" class="btn-primary">Continue Shopping</a>
+  </div>
+</section>
+
+<style>
+  .order-confirmation-page { padding: 60px 0; text-align: center; }
+  .order-confirmation-page h1 { font-family: var(--font-display); font-size: 36px; margin-bottom: 16px; }
+  .order-confirmation-page #order-details { background: var(--white); padding: 24px; border-radius: var(--radius); margin: 24px 0; text-align: left; max-width: 600px; margin-left: auto; margin-right: auto; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+  .order-confirmation-page #order-details ul { padding-left: 20px; }
+  .btn-primary { display: inline-block; padding: 12px 30px; background: var(--primary-color); color: white; border-radius: 8px; font-weight: 600; transition: all 0.3s ease; text-decoration: none; }
+  .btn-primary:hover { background: var(--secondary-color); color: white; }
+</style>
+
+<script>
+  (function() {
+    'use strict';
+
+    console.log('🔍 Order Confirmation loading...');
+
+    // =============================================================
+    // ✅ 1. Force badge to 0 immediately
+    // =============================================================
+    var badge = document.getElementById('cart-count');
+    if (badge) badge.textContent = '0';
+    localStorage.removeItem('cartItems');
+
+    // =============================================================
+    // ✅ 2. Refresh badge from server (overcome cache)
+    // =============================================================
+    async function refreshBadge() {
+      try {
+        var token = localStorage.getItem('accessToken');
+        var headers = {};
+        if (token) headers['Authorization'] = 'Bearer ' + token;
+        var res = await fetch('/api/public/cart/count?storeSlug=<%= store.slug %>&_=' + Date.now(), { headers: headers });
+        if (res.ok) {
+          var data = await res.json();
+          var badgeEl = document.getElementById('cart-count');
+          if (badgeEl) badgeEl.textContent = data.count || 0;
+        }
+      } catch (e) { console.warn('Badge refresh error:', e); }
+    }
+    refreshBadge();
+
+    // =============================================================
+    // ✅ 3. Load order details (with Authorization header)
+    // =============================================================
+    var token = localStorage.getItem('accessToken');
+    var urlParams = new URLSearchParams(window.location.search);
+    var orderId = urlParams.get('orderId');
+
+    if (!orderId) {
+      document.getElementById('order-details').innerHTML = '<p style="color:#ef4444;">Order ID not found.</p>';
+      return;
+    }
+
+    var headers = {};
+    if (token) headers['Authorization'] = 'Bearer ' + token;
+
+    fetch('/api/public/orders/' + orderId + '?storeSlug=<%= store.slug %>&_=' + Date.now(), { headers: headers })
+      .then(function(res) {
+        if (res.status === 401) {
+          document.getElementById('order-details').innerHTML = '<p style="color:#ef4444;">Please <a href="/stores/<%= store.slug %>/login.html">login</a> to view order details.</p>';
+          return;
+        }
+        if (!res.ok) {
+          document.getElementById('order-details').innerHTML = '<p style="color:#ef4444;">Order not found.</p>';
+          return;
+        }
+        return res.json();
+      })
+      .then(function(data) {
+        if (!data) return;
+        var order = data.data;
+        var itemsHtml = '<ul>';
+        order.items.forEach(function(item) {
+          itemsHtml += '<li>' + item.name + ' × ' + item.quantity + ' – ₹' + item.price + '</li>';
+        });
+        itemsHtml += '</ul>';
+
+        var orderDate = new Date(order.createdAt).toLocaleDateString('en-IN', {
+          year: 'numeric', month: 'short', day: 'numeric'
+        });
+
+        document.getElementById('order-details').innerHTML =
+          '<p><strong>Order ID:</strong> ' + order.orderId + '</p>' +
+          '<p><strong>Total:</strong> ₹' + order.total + '</p>' +
+          '<p><strong>Status:</strong> <span style="color:#f97316;font-weight:600;">' + order.orderStatus + '</span></p>' +
+          '<p><strong>Placed on:</strong> ' + orderDate + '</p>' +
+          '<h4>Items:</h4>' +
+          itemsHtml;
+      })
+      .catch(function(err) {
+        console.error('Error:', err);
+        document.getElementById('order-details').innerHTML = '<p style="color:#ef4444;">Error loading order.</p>';
+      });
+
+  })();
+</script>

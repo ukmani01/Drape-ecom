@@ -1,0 +1,75 @@
+<section class="hero-section">
+  <div class="hero-container">
+    <% if (hero.image) { %>
+      <div class="hero-image" style="background-image: url('<%= hero.image %>')">
+        <div class="hero-overlay"></div>
+        <div class="hero-content">
+          <h1><%= hero.title || 'Welcome to ' + store.name %></h1>
+          <p><%= hero.description || 'Discover our premium collection.' %></p>
+          <a href="<%= hero.buttonLink || '/stores/' + store.slug + '/products.html' %>" class="hero-btn"><%= hero.buttonText || 'Shop Now' %></a>
+        </div>
+      </div>
+    <% } else { %>
+      <div class="hero-content-center">
+        <h1><%= hero.title || 'Welcome to ' + store.name %></h1>
+        <p><%= hero.description || 'Discover our premium collection.' %></p>
+        <a href="/stores/<%= store.slug %>/products.html" class="hero-btn">Shop Now</a>
+      </div>
+    <% } %>
+  </div>
+</section>
+<% if (activeCategories && activeCategories.length > 0) { %>
+<section class="categories-section">
+  <div class="container"><h2>Shop by Category</h2>
+  <div class="category-grid">
+    <% activeCategories.slice(0, 4).forEach(category => { %>
+      <a href="/stores/<%= store.slug %>/products.html?category=<%= category.slug %>" class="category-card">
+        <div class="category-image"><img src="<%= category.image || '/placeholder.jpg' %>" alt="<%= category.name %>" loading="lazy"></div>
+        <h3><%= category.name %></h3>
+      </a>
+    <% }) %>
+  </div>
+  </div>
+</section>
+<% } %>
+<% if (bestSellers && bestSellers.length > 0) { %>
+<section class="products-section">
+  <div class="container">
+    <div class="section-header"><h2>Best Sellers</h2><a href="/stores/<%= store.slug %>/products.html" class="view-all">View All →</a></div>
+    <div class="product-grid">
+      <% bestSellers.slice(0, 8).forEach(product => { %>
+        <div class="product-card">
+          <!-- ✅ UPDATED: Dynamic product link -->
+          <a href="/stores/<%= store.slug %>/product.html?slug=<%= product.slug || product._id %>">
+            <div class="product-image"><img src="<%= product.images && product.images[0] ? product.images[0] : '/placeholder.jpg' %>" alt="<%= product.title %>" loading="lazy"><% if (product.isBestSeller) { %><span class="badge bestseller">Bestseller</span><% } %></div>
+            <h3 class="product-title"><%= product.title %></h3>
+            <p class="product-price"><%= helpers.formatCurrency(helpers.getVariantPrice(product.variants)) %></p>
+          </a>
+        </div>
+      <% }) %>
+    </div>
+  </div>
+</section>
+<% } %>
+<% if (newArrivals && newArrivals.length > 0) { %>
+<section class="products-section">
+  <div class="container">
+    <div class="section-header"><h2>New Arrivals</h2><a href="/stores/<%= store.slug %>/products.html" class="view-all">View All →</a></div>
+    <div class="product-grid">
+      <% newArrivals.slice(0, 8).forEach(product => { %>
+        <div class="product-card">
+          <!-- ✅ UPDATED: Dynamic product link -->
+          <a href="/stores/<%= store.slug %>/product.html?slug=<%= product.slug || product._id %>">
+            <div class="product-image"><img src="<%= product.images && product.images[0] ? product.images[0] : '/placeholder.jpg' %>" alt="<%= product.title %>" loading="lazy"><% if (product.isNew) { %><span class="badge new">New</span><% } %></div>
+            <h3 class="product-title"><%= product.title %></h3>
+            <p class="product-price"><%= helpers.formatCurrency(helpers.getVariantPrice(product.variants)) %></p>
+          </a>
+        </div>
+      <% }) %>
+    </div>
+  </div>
+</section>
+<% } %>
+<% if (homepage?.aboutText) { %>
+<section class="about-section"><div class="container"><div class="about-content"><p><%= homepage.aboutText %></p></div></div></section>
+<% } %>

@@ -1,0 +1,224 @@
+<!-- Dynamic Product Detail Page -->
+<div id="product-detail-container" class="product-detail-page">
+  <!-- Content rendered by JavaScript -->
+</div>
+
+<!-- Scoped store data in a hidden element -->
+<script type="application/json" id="store-data">
+<%- JSON.stringify({
+  storeSlug: store.slug,
+  product: typeof product !== 'undefined' ? product : (typeof products !== 'undefined' && products.length ? products[0] : null),
+  relatedProducts: typeof relatedProducts !== 'undefined' ? relatedProducts : [],
+  activeCategories: activeCategories
+}) %>
+</script>
+
+<script>
+  // Read embedded data
+  const storeData = JSON.parse(document.getElementById('store-data').textContent);
+  const STORE_SLUG = storeData.storeSlug;
+  const PRODUCT = storeData.product;
+  const RELATED_PRODUCTS = storeData.relatedProducts || [];
+  const ACTIVE_CATEGORIES = storeData.activeCategories || [];
+
+  function formatCurrency(amount) {
+    return new Intl.NumberFormat('en-IN', { maximumFractionDigits: 2 }).format(amount);
+  }
+
+  function getVariantPrice(variants) {
+    if (!variants || !variants.length) return 0;
+    return variants[0]?.price || 0;
+  }
+
+  function getVariantStock(variants) {
+    if (!variants || !variants.length) return 0;
+    return variants[0]?.stock || 0;
+  }
+
+  function renderProductDetail() {
+    const product = PRODUCT;
+    const container = document.getElementById('product-detail-container');
+    const BASE_PATH = '/stores/' + STORE_SLUG;
+
+    if (!product) {
+      container.innerHTML = `
+        <div class="container">
+          <div class="product-not-found">
+            <h1>Product not found</h1>
+            <a href="${BASE_PATH}/products.html">Browse Products</a>
+          </div>
+        </div>`;
+      return;
+    }
+
+    const mainImage = product.images?.[0] || '/placeholder.jpg';
+    const price = getVariantPrice(product.variants);
+    const compareAtPrice = product.variants?.[0]?.compareAtPrice;
+    const discount = compareAtPrice ? Math.round(((compareAtPrice - price) / compareAtPrice) * 100) : 0;
+    const stock = getVariantStock(product.variants);
+    const inStock = stock > 0;
+    const category = ACTIVE_CATEGORIES.find(c => c._id === product.categoryId);
+    const relatedProducts = RELATED_PRODUCTS;
+
+    let variantsHtml = '';
+    if (product.variants?.length) {
+      if (product.variants.some(v => v.size)) {
+        variantsHtml += `
+          <div class="variant-group">
+            <label>Size:</label>
+            <select id="variant-size">
+              <option value="">Select Size</option>
+              ${product.variants.map((v, idx) => `<option value="${idx}">${v.size}</option>`).join('')}
+            </select>
+          </div>`;
+      }
+      if (product.variants.some(v => v.color)) {
+        variantsHtml += `
+          <div class="variant-group">
+            <label>Color:</label>
+            <select id="variant-color">
+              <option value="">Select Color</option>
+              ${product.variants.map((v, idx) => `<option value="${idx}">${v.color}</option>`).join('')}
+            </select>
+          </div>`;
+      }
+    }
+
+    const thumbnails = product.images?.map((img, i) => `
+      <div class="thumbnail ${i === 0 ? 'active' : ''}" onclick="changeImage('${img}', this)">
+        <img src="${img}" alt="Thumbnail ${i+1}">
+      </div>`).join('') || '';
+
+    let relatedHtml = '';
+    if (relatedProducts.length) {
+      relatedHtml = `
+        <section class="related-products">
+          <h2>You May Also Like</h2>
+          <div class="product-grid">
+            ${relatedProducts.map(rp => {
+              const rpImg = rp.images?.[0] || '/placeholder.jpg';
+              const rpPrice = getVariantPrice(rp.variants);
+              return `
+                <div class="product-card">
+                  <a href="${BASE_PATH}/product.html?slug=${rp.slug || rp._id}">
+                    <div class="product-image">
+                      <img src="${rpImg}" alt="${rp.title}" loading="lazy">
+                    </div>
+                    <h3 class="product-title">${rp.title}</h3>
+                    <p class="product-price">₹${formatCurrency(rpPrice)}</p>
+                  </a>
+                </div>`;
+            }).join('')}
+          </div>
+        </section>`;
+    }
+
+    container.innerHTML = `
+      <div class="container">
+        <div class="breadcrumb">
+          <a href="${BASE_PATH}">Home</a> / 
+          <a href="${BASE_PATH}/products.html">Products</a> / 
+          <span>${product.title}</span>
+        </div>
+        <div class="product-detail-layout">
+          <div class="product-images">
+            <div class="main-image">
+              <img src="${mainImage}" alt="${product.title}" id="main-product-image">
+            </div>
+            <div class="thumbnail-grid">${thumbnails}</div>
+          </div>
+          <div class="product-info">
+            <h1 class="product-title">${product.title}</h1>
+            <div class="product-price-container">
+              <span class="product-price">₹${formatCurrency(price)}</span>
+              ${compareAtPrice ? `<span class="compare-price">₹${formatCurrency(compareAtPrice)}</span>
+              <span class="discount-tag">Save ${discount}%</span>` : ''}
+            </div>
+            <div class="stock-status">
+              ${inStock ? '<span class="in-stock">✅ In Stock</span>' : '<span class="out-of-stock">❌ Out of Stock</span>'}
+            </div>
+            <div class="product-description">
+              <p>${product.description || 'No description available.'}</p>
+            </div>
+            ${variantsHtml}
+            <div class="add-to-cart-section">
+              <div class="quantity-selector">
+                <button onclick="decrementQty()">−</button>
+                <input type="number" id="quantity" value="1" min="1" max="${stock || 10}">
+                <button onclick="incrementQty()">+</button>
+              </div>
+              <button class="add-to-cart-btn" onclick="addToCart('${product._id}')" ${!inStock ? 'disabled' : ''}>
+                🛒 Add to Cart
+              </button>
+            </div>
+            <div class="product-meta">
+              <p><strong>SKU:</strong> ${product.variants?.[0]?.sku || 'N/A'}</p>
+              <p><strong>Category:</strong> ${category ? category.name : 'Uncategorized'}</p>
+            </div>
+          </div>
+        </div>
+        ${relatedHtml}
+      </div>`;
+  }
+
+  window.changeImage = function(src, element) {
+    const mainImg = document.getElementById('main-product-image');
+    if (mainImg) mainImg.src = src;
+    document.querySelectorAll('.thumbnail').forEach(t => t.classList.remove('active'));
+    element.classList.add('active');
+  };
+
+  window.incrementQty = function() {
+    const input = document.getElementById('quantity');
+    if (!input) return;
+    const max = parseInt(input.max) || 99;
+    if (parseInt(input.value) < max) input.value = parseInt(input.value) + 1;
+  };
+
+  window.decrementQty = function() {
+    const input = document.getElementById('quantity');
+    if (input && parseInt(input.value) > 1) input.value = parseInt(input.value) - 1;
+  };
+
+  window.addToCart = async function(productId) {
+    const quantity = parseInt(document.getElementById('quantity')?.value) || 1;
+    try {
+      const token = localStorage.getItem('accessToken');
+      const headers = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = 'Bearer ' + token;
+      const res = await fetch('/api/public/cart', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ productId, quantity, storeSlug: STORE_SLUG })
+      });
+      if (res.ok) {
+        alert('✅ Product added to cart!');
+        updateCartCount();
+      } else {
+        const err = await res.json();
+        alert('❌ Failed: ' + (err.message || 'Please try again'));
+      }
+    } catch (e) {
+      alert('❌ Error adding to cart.');
+    }
+  };
+
+  async function updateCartCount() {
+    try {
+      const token = localStorage.getItem('accessToken');
+      const headers = {};
+      if (token) headers['Authorization'] = 'Bearer ' + token;
+      const res = await fetch(`/api/public/cart/count?storeSlug=${STORE_SLUG}`, { headers });
+      if (res.ok) {
+        const data = await res.json();
+        const countEl = document.getElementById('cart-count');
+        if (countEl) countEl.textContent = data.count || 0;
+      }
+    } catch (e) {}
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    renderProductDetail();
+    updateCartCount();
+  });
+</script>

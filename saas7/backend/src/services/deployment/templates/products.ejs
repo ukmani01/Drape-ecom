@@ -1,0 +1,56 @@
+<section class="products-page">
+  <div class="container">
+    <div class="page-header"><h1>Our Products</h1><p><%= totalProducts %> products available</p></div>
+    <div class="products-layout">
+      <aside class="filters-sidebar">
+        <h3>Categories</h3>
+        <ul class="category-filters">
+          <li><a href="/stores/<%= store.slug %>/products.html" class="filter-link active">All Products</a></li>
+          <% activeCategories.forEach(category => { %><li><a href="/stores/<%= store.slug %>/products.html?category=<%= category.slug %>" class="filter-link"><%= category.name %></a></li><% }) %>
+        </ul>
+        <h3>Sort By</h3>
+        <select id="sort-select" class="sort-select">
+          <option value="newest">Newest First</option>
+          <option value="price-low">Price: Low → High</option>
+          <option value="price-high">Price: High → Low</option>
+        </select>
+      </aside>
+      <div class="product-grid-container">
+        <div class="product-grid">
+          <% if (products && products.length > 0) { %>
+            <% products.forEach(product => { %>
+              <div class="product-card">
+                <!-- ✅ UPDATED LINK: Dynamic product page -->
+                <a href="/stores/<%= store.slug %>/product.html?slug=<%= product.slug || product._id %>">
+                  <div class="product-image"><img src="<%= product.images && product.images[0] ? product.images[0] : '/placeholder.jpg' %>" alt="<%= product.title %>" loading="lazy"><% if (product.isBestSeller) { %><span class="badge bestseller">Bestseller</span><% } %><% if (product.isNew) { %><span class="badge new">New</span><% } %></div>
+                  <h3 class="product-title"><%= product.title %></h3>
+                  <p class="product-price"><%= helpers.formatCurrency(helpers.getVariantPrice(product.variants)) %></p>
+                  <% if (helpers.getVariantStock(product.variants) <= 0) { %><span class="out-of-stock">Out of Stock</span><% } %>
+                </a>
+              </div>
+            <% }) %>
+          <% } else { %><p class="no-products">No products found.</p><% } %>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const category = urlParams.get('category');
+    const sort = urlParams.get('sort');
+    if (category) {
+      document.querySelectorAll('.filter-link').forEach(link => {
+        link.classList.remove('active');
+        if (link.href.includes(`category=${category}`)) link.classList.add('active');
+      });
+    }
+    if (sort) { document.getElementById('sort-select').value = sort; }
+    document.getElementById('sort-select').addEventListener('change', function() {
+      const url = new URL(window.location.href);
+      url.searchParams.set('sort', this.value);
+      window.location.href = url.toString();
+    });
+  });
+</script>
