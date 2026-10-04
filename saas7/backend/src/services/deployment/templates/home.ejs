@@ -20,15 +20,18 @@
 </section>
 <% if (activeCategories && activeCategories.length > 0) { %>
 <section class="categories-section">
-  <div class="container"><h2>Shop by Category</h2>
-  <div class="category-grid">
-    <% activeCategories.slice(0, 4).forEach(category => { %>
-      <a href="/stores/<%= store.slug %>/products.html?category=<%= category.slug %>" class="category-card">
-        <div class="category-image"><img src="<%= category.image || '/placeholder.jpg' %>" alt="<%= category.name %>" loading="lazy"></div>
-        <h3><%= category.name %></h3>
-      </a>
-    <% }) %>
-  </div>
+  <div class="container">
+    <h2>Shop by Category</h2>
+    <div class="category-grid">
+      <% activeCategories.slice(0, 6).forEach(category => { %>
+        <a href="/stores/<%= store.slug %>/products.html?category=<%= category.slug %>" class="category-card">
+          <div class="category-image">
+            <img src="<%= category.image || '/placeholder.jpg' %>" alt="<%= category.name %>" class="category-img" loading="lazy" onerror="this.onerror=null;this.src='/placeholder.jpg';">
+          </div>
+          <h3><%= category.name %></h3>
+        </a>
+      <% }) %>
+    </div>
   </div>
 </section>
 <% } %>

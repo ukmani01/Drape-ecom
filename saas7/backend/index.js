@@ -52,26 +52,79 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Security
+// Security Headers - configured for multi-tenant and cross-origin static assets
 app.use(helmet({
+  crossOriginResourcePolicy: { policy: 'cross-origin' },
+  crossOriginEmbedderPolicy: false,
   contentSecurityPolicy: {
     directives: {
-      defaultSrc: ["'self'"],
-      
-      // ✅ For <script> tags
-      scriptSrc: ["'self'", "'unsafe-inline'"],
-      
-      // ✅ For onclick, onsubmit, etc. (THIS IS CRUCIAL!)
+      defaultSrc: ["'self'", '*'],
+      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", 'https://*'],
       scriptSrcAttr: ["'unsafe-inline'"],
-      
-      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
-      imgSrc: ["'self'", "data:", "https://res.cloudinary.com", "https://via.placeholder.com"],
-      fontSrc: ["'self'", "https://fonts.gstatic.com"],
-      connectSrc: ["'self'", "http://localhost:5002", "https://api.onrender.com"],
+      styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com', 'https://*'],
+      imgSrc: ["'self'", 'data:', 'blob:', 'https:', 'http:'],
+      fontSrc: ["'self'", 'data:', 'https://fonts.gstatic.com', 'https://*'],
+      connectSrc: ["'self'", 'https://*', 'http://localhost:*', 'ws:', 'wss:'],
     },
   },
 }));
-  
+
+// =============================================================
+// ✅ 1. CORS CONFIGURATION (Registered BEFORE rate limiter & body parsers)
+// =============================================================
+const allowedOrigins = [
+  'https://drape-ecom.vercel.app',
+  'http://localhost:5173',
+  'http://localhost:3000',
+  'http://localhost:5000',
+  'http://localhost:5002',
+  process.env.CLIENT_URL,
+  process.env.FRONTEND_URL,
+  process.env.CORS_ORIGIN,
+].filter(Boolean);
+
+const corsOptions = {
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true);
+    if (
+      allowedOrigins.includes(origin) ||
+      allowedOrigins.includes('*') ||
+      /\.vercel\.app$/.test(origin)
+    ) {
+      return callback(null, true);
+    }
+    // Allow request for multi-tenant customer storefronts
+    return callback(null, true);
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+  optionsSuccessStatus: 200,
+};
+
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
+
+// =============================================================
+// ✅ 2. RATE LIMITER (Registered AFTER CORS; skips OPTIONS preflight)
+// =============================================================
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 300,
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: (req) => {
+    if (req.method === 'OPTIONS') return true;
+    if (process.env.NODE_ENV === 'development') return true;
+    return false;
+  },
+  message: {
+    success: false,
+    message: 'Too many requests from this IP, please try again later.',
+  },
+});
+app.use(limiter);
+
 app.use(mongoSanitize());
 
 // Compression
@@ -81,20 +134,48 @@ app.use(compression());
 app.use(morgan('combined'));
 
 // =============================================================
-// ✅ SERVE STATIC HTML STOREFRONTS
+// ✅ 3. SERVE STATIC HTML STOREFRONTS & ASSETS (with correct MIME headers)
 // =============================================================
 const staticPath = path.join(__dirname, 'public/stores');
+const sharedAssetsPath = path.join(staticPath, 'assets');
 console.log(`📂 Serving static files from: ${staticPath}`);
 
+const staticHeaderOptions = {
+  maxAge: '1d',
+  setHeaders: (res, filePath) => {
+    if (filePath.endsWith('.css')) {
+      res.setHeader('Content-Type', 'text/css');
+    } else if (filePath.endsWith('.js')) {
+      res.setHeader('Content-Type', 'application/javascript');
+    }
+    res.setHeader('Access-Control-Allow-Origin', '*');
+  },
+};
+
+// Direct assets route: /stores/assets/global.css, /stores/assets/app.js
+app.use('/stores/assets', express.static(sharedAssetsPath, staticHeaderOptions));
+
+// Store-specific assets route: /stores/:storeSlug/assets/...
+app.use('/stores/:storeSlug/assets', express.static(sharedAssetsPath, staticHeaderOptions));
+
+// Fallback: check if store-specific folder has assets
+app.use('/stores/:storeSlug/assets', (req, res, next) => {
+  const storeSpecificAssets = path.join(staticPath, req.params.storeSlug, 'assets');
+  express.static(storeSpecificAssets, staticHeaderOptions)(req, res, next);
+});
+
+// Storefront SSR Dynamic Router
 app.use('/stores', storefrontRoutes);
 
-app.use('/stores/:storeSlug/assets', express.static(path.join(staticPath, 'assets')));
-
+// Static store files fallback
 app.use('/stores', express.static(staticPath, {
-  maxAge: '1d',
+  ...staticHeaderOptions,
   extensions: ['html'],
-  index: 'index.html'
+  index: 'index.html',
 }));
+
+// Fallback public folder serving
+app.use(express.static(path.join(__dirname, 'public'), staticHeaderOptions));
 
 // =============================================================
 // ✅ FALLBACK ROUTE – Serves HTML directly if static fails
@@ -130,28 +211,6 @@ app.get('/stores/:storeId', async (req, res) => {
     res.status(404).send(`Store not found: ${storeId}`);
   }
 });
-
-// =============================================================
-
-// Rate limiting - Bypass in development
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 100,
-  skip: (req) => {
-    if (process.env.NODE_ENV === 'development') {
-      return true;
-    }
-    return false;
-  },
-  message: 'Too many requests from this IP, please try again later.',
-});
-app.use(limiter);
-
-// CORS
-app.use(cors({
-  origin: process.env.CORS_ORIGIN || '*',
-  credentials: true,
-}));
 
 // Body parsing
 app.use(express.json({ limit: '10mb' }));

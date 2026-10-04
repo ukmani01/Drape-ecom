@@ -11,7 +11,7 @@
   <meta property="og:image" content="<%= store.logo || settings?.brand?.logo || '' %>">
   <meta property="og:url" content="<%= `${baseUrl}/stores/${store.slug}` %>">
   <meta property="og:type" content="website">
-  <link rel="stylesheet" href="/stores/<%= store.slug %>/assets/global.css">
+  <link rel="stylesheet" href="/stores/<%= store.slug %>/assets/global.css?v=4">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
     :root { --primary-color: <%= settings?.styling?.primaryColor || '#f97316' %>; --secondary-color: <%= settings?.styling?.secondaryColor || '#1a1509' %>; }
@@ -43,21 +43,49 @@
             <% } %>
           </a>
         </div>
-        <nav class="header-nav">
+        
+        <!-- Desktop Navigation -->
+        <nav class="header-nav desktop-nav">
           <a href="/stores/<%= store.slug %>">Home</a>
           <a href="/stores/<%= store.slug %>/products.html">Products</a>
           <a href="/stores/<%= store.slug %>/cart.html">Cart</a>
           <a href="/stores/<%= store.slug %>/orders.html">Orders</a>
         </nav>
+
         <div class="header-actions">
-          <a href="/stores/<%= store.slug %>/cart.html" class="cart-icon">
+          <a href="/stores/<%= store.slug %>/cart.html" class="cart-icon" aria-label="Shopping Cart">
             🛒 <span id="cart-count">0</span>
           </a>
-          <div id="auth-buttons">
+          <div id="auth-buttons" class="desktop-auth">
             <a href="/stores/<%= store.slug %>/login.html">Login</a>
             <a href="/stores/<%= store.slug %>/register.html">Register</a>
           </div>
+          
+          <!-- Mobile Hamburger Toggle Button -->
+          <button class="mobile-menu-toggle" id="mobile-menu-toggle" aria-label="Open Navigation Menu">
+            <span></span>
+            <span></span>
+            <span></span>
+          </button>
         </div>
+      </div>
+    </div>
+
+    <!-- Mobile Full-Screen Animated Overlay Menu -->
+    <div class="mobile-nav-overlay" id="mobile-nav-overlay">
+      <div class="mobile-nav-header">
+        <span class="mobile-nav-brand"><%= store.name %></span>
+        <button class="mobile-nav-close" id="mobile-nav-close" aria-label="Close Navigation Menu">&times;</button>
+      </div>
+      <nav class="mobile-nav-links">
+        <a href="/stores/<%= store.slug %>" class="mobile-nav-link">Home</a>
+        <a href="/stores/<%= store.slug %>/products.html" class="mobile-nav-link">Products</a>
+        <a href="/stores/<%= store.slug %>/cart.html" class="mobile-nav-link">Cart (<span id="mobile-cart-count">0</span>)</a>
+        <a href="/stores/<%= store.slug %>/orders.html" class="mobile-nav-link">Orders</a>
+      </nav>
+      <div class="mobile-nav-auth" id="mobile-auth-buttons">
+        <a href="/stores/<%= store.slug %>/login.html" class="mobile-btn-outline">Login</a>
+        <a href="/stores/<%= store.slug %>/register.html" class="mobile-btn-primary">Register</a>
       </div>
     </div>
   </header>
@@ -121,6 +149,6 @@
   <!-- ================================================================ -->
   <!-- ✅ app.js LOADS AT THE VERY END                                  -->
   <!-- ================================================================ -->
-  <script src="/stores/<%= store.slug %>/assets/app.js?v=3"></script>
+  <script src="/stores/<%= store.slug %>/assets/app.js?v=4"></script>
 </body>
 </html>
