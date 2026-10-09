@@ -135,7 +135,7 @@
               <span class="discount-tag">Save ${discount}%</span>` : ''}
             </div>
             <div class="stock-status">
-              ${inStock ? '<span class="in-stock">✅ In Stock</span>' : '<span class="out-of-stock">❌ Out of Stock</span>'}
+              ${inStock ? '<span class="in-stock">In Stock</span>' : '<span class="out-of-stock">Out of Stock</span>'}
             </div>
             <div class="product-description">
               <p>${product.description || 'No description available.'}</p>
@@ -148,7 +148,7 @@
                 <button onclick="incrementQty()">+</button>
               </div>
               <button class="add-to-cart-btn" onclick="addToCart('${product._id}')" ${!inStock ? 'disabled' : ''}>
-                🛒 Add to Cart
+                Add to Cart
               </button>
             </div>
             <div class="product-meta">

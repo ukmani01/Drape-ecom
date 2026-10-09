@@ -68,7 +68,8 @@ pids/
 # =============================================================
 # Backend-specific
 # =============================================================
-backend/public/stores/
+backend/public/stores/*
+!backend/public/stores/assets/
 backend/uploads/
 backend/coverage/
 
