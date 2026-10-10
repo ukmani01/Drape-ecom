@@ -50,11 +50,11 @@
 
   /* Image system */
   --ratio-product: 4 / 5;
-  --ratio-category: 4 / 5;
-  --product-image-fit: contain;      /* contain = never crop; switch to cover for editorial crops */
-  --category-image-fit: contain;
+  --ratio-category: 3 / 4;
+  --product-image-fit: cover;        /* cover = image fills the frame edge to edge; contain = never crop */
+  --category-image-fit: cover;       /* full-bleed editorial crop for category tiles */
   --image-position: center;
-  --product-image-padding: clamp(8px, 1.5vw, 16px);
+  --product-image-padding: 0;        /* no gap between image and frame */
 }
 
 html { -webkit-text-size-adjust: 100%; }
@@ -512,26 +512,53 @@ a:hover { color: var(--accent); }
 }
 
 /* ==========================================================================
-   Categories
+   Categories — editorial tiles: full-bleed image, title overlaid bottom-left
+   Markup relied on (unchanged):
+     a.category-card > div.category-image > img   +   h3  (h3 is a sibling of the image,
+     inside the same positioned card, so it can be overlaid with CSS alone)
    ========================================================================== */
 .categories-section { padding: var(--section-space) 0 calc(var(--section-space) * 0.4); }
-.categories-section h2 { margin-bottom: 32px; text-align: left; }
+.categories-section h2 {
+  margin-bottom: 32px;
+  text-align: left;
+  max-width: 1080px;               /* heading lines up with the capped grid below */
+  margin-left: auto;
+  margin-right: auto;
+}
+/* Two columns at every width; extra categories simply continue into new rows */
 .cat-grid, .category-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 1fr));
-  gap: 32px 24px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(12px, 2.5vw, 32px);
+  max-width: 1080px;               /* keeps tiles from becoming huge on wide monitors */
+  margin-left: auto;
+  margin-right: auto;
 }
 .cat-card, .category-card {
-  background: transparent;
+  position: relative;
+  isolation: isolate;
+  background: var(--surface);
   border: none;
-  border-radius: 0;
+  border-radius: var(--radius-sm);
   overflow: hidden;
   transition: var(--transition);
   text-align: left;
   display: block;
   min-width: 0;
 }
-.cat-card:hover, .category-card:hover { color: var(--text); }
+.cat-card:hover, .category-card:hover { color: var(--white); }
+.cat-card:focus-visible, .category-card:focus-visible { outline-offset: 3px; }
+
+/* Soft bottom gradient so the title stays legible on light or busy images */
+.cat-card::after, .category-card::after {
+  content: "";
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: 55%;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.62) 0%, rgba(0, 0, 0, 0.28) 50%, rgba(0, 0, 0, 0) 100%);
+  z-index: 1;
+  pointer-events: none;
+}
 
 /* Fixed-ratio frame: differently sized uploads all line up */
 .category-image {
@@ -556,16 +583,28 @@ a:hover { color: var(--accent); }
 .category-image > .category-img {
   position: absolute;
   inset: 0;
-  padding: clamp(10px, 2vw, 20px);
+  padding: 0;
 }
+
+/* Title overlay */
 .cat-card h3, .category-card h3 {
-  padding: 14px 0 0;
-  font-size: 14px;
-  font-weight: 500;
-  line-height: 1.4;
-  letter-spacing: 0.01em;
-  color: var(--text);
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  z-index: 2;
+  padding: clamp(14px, 3vw, 28px);
+  font-family: var(--font-display);
+  font-size: clamp(18px, 2.6vw, 30px);
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  color: var(--white);
   overflow-wrap: break-word;
+  pointer-events: none;            /* clicks fall through to the card link */
+}
+
+/* Larger screens: slightly taller, more editorial tiles */
+@media (min-width: 1024px) {
+  :root { --ratio-category: 4 / 5; }
 }
 
 /* ==========================================================================
@@ -633,13 +672,28 @@ a:hover { color: var(--accent); }
   left: 0;
   width: 100%;
   height: 100%;
-  object-fit: var(--product-image-fit);   /* contain by default: never crops product details */
+  object-fit: var(--product-image-fit);   /* cover by default: fills the frame with no empty space */
   object-position: var(--image-position);
   padding: var(--product-image-padding);
   display: block;
   transition: transform 0.4s ease, opacity 0.2s ease;
 }
 .product-card:has(.out-of-stock) .product-image img { opacity: 0.55; }
+
+/* Edge-to-edge fill: image always covers the whole frame, no empty space on any side.
+   Higher specificity + !important so no other rule (variables, padding, theme CSS) can reintroduce gaps. */
+.product-card .product-image > img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 0 !important;
+  object-fit: cover !important;
+  object-position: var(--image-position, center);
+  background: transparent;
+}
 
 /* Older browsers without aspect-ratio keep the 4:5 frame via padding */
 @supports not (aspect-ratio: 1 / 1) {
@@ -1530,7 +1584,7 @@ input[type="radio"], input[type="checkbox"] {
   .hero-content-center { min-height: clamp(280px, 48vh, 440px); }
 
   .product-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 32px 14px; }
-  .cat-grid, .category-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px 14px; }
+  .cat-grid, .category-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 
   .form-row { grid-template-columns: 1fr; gap: 0; }
 
@@ -1579,7 +1633,8 @@ input[type="radio"], input[type="checkbox"] {
   #auth-buttons a { padding: 8px 10px; font-size: 12px; }
   .header-nav { gap: 16px; }
   .product-grid { gap: 24px 10px; }
-  .cat-grid, .category-grid { gap: 20px 10px; }
+  .cat-grid, .category-grid { gap: 10px; }
+  .cat-card h3, .category-card h3 { font-size: 16px; padding: 12px; }
 }
 
 /* Respect reduced-motion preference */
