@@ -28,6 +28,23 @@
       currency: '<%= store.currency || "INR" %>',
     };
     console.log('✅ [layout] __STORE_CONFIG__ defined in HEAD:', window.__STORE_CONFIG__);
+
+    // Immediate badge hydration from localStorage to prevent flash of 0 across navigation
+    (function() {
+      try {
+        var token = localStorage.getItem('accessToken');
+        var slug = '<%= store.slug %>';
+        var cached = token ? ((slug && localStorage.getItem('cartCount_' + slug)) || localStorage.getItem('cartCount')) : '0';
+        if (cached !== null && cached !== undefined) {
+          document.addEventListener('DOMContentLoaded', function() {
+            var el = document.getElementById('cart-count');
+            var mel = document.getElementById('mobile-cart-count');
+            if (el) el.textContent = cached;
+            if (mel) mel.textContent = cached;
+          });
+        }
+      } catch (e) {}
+    })();
   </script>
 </head>
 <body>

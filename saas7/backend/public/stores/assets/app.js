@@ -31,6 +31,14 @@ if (!CONFIG.storeSlug) {
 }
 
 // =============================================================
+// ✅ CART TOTAL UNITS HELPER
+// =============================================================
+function calculateTotalUnits(items) {
+  if (!Array.isArray(items)) return 0;
+  return items.reduce((sum, item) => sum + (parseInt(item.quantity, 10) || 1), 0);
+}
+
+// =============================================================
 // ✅ FIXED: CART COUNT (Cache-Busting + Token)
 // =============================================================
 async function getCartCount() {
@@ -41,8 +49,12 @@ async function getCartCount() {
 
   try {
     const token = localStorage.getItem('accessToken');
+    if (!token) {
+      updateCartUI(0);
+      return 0;
+    }
     const headers = {};
-    if (token) headers['Authorization'] = 'Bearer ' + token;
+    headers['Authorization'] = 'Bearer ' + token;
 
     // ✅ 🔥 FIX: Add cache-busting parameter!
     const url = `${CONFIG.apiBase}/public/cart/count?storeSlug=${CONFIG.storeSlug}&_=${Date.now()}`;
@@ -50,7 +62,9 @@ async function getCartCount() {
 
     if (res.ok) {
       const data = await res.json();
-      return data.count || 0;
+      const count = parseInt(data.count, 10) || 0;
+      updateCartUI(count);
+      return count;
     }
     return 0;
   } catch {
@@ -80,7 +94,7 @@ async function addToCart(productId, quantity = 1) {
 
     if (res.ok) {
       const data = await res.json();
-      const count = data.data?.items?.length || 0;
+      const count = calculateTotalUnits(data.data?.items);
       updateCartUI(count);
       showToast('✅ Product added to cart!', 'success');
       return { success: true, data };
@@ -127,9 +141,9 @@ async function getCart() {
 }
 
 // =============================================================
-// UPDATE CART ITEM
+// UPDATE CART ITEM (Namespaced to avoid overwriting cart page)
 // =============================================================
-async function updateCartItem(productId, quantity) {
+async function storefrontUpdateCartItem(productId, quantity) {
   if (!CONFIG.storeSlug) {
     return { success: false };
   }
@@ -147,7 +161,7 @@ async function updateCartItem(productId, quantity) {
 
     if (res.ok) {
       const data = await res.json();
-      const count = data.data?.items?.length || 0;
+      const count = calculateTotalUnits(data.data?.items);
       updateCartUI(count);
       return { success: true, data };
     }
@@ -155,6 +169,11 @@ async function updateCartItem(productId, quantity) {
   } catch {
     return { success: false };
   }
+}
+
+// Only assign to window if not already defined by cart-checkout page
+if (typeof window.updateCartItem === 'undefined') {
+  window.updateCartItem = storefrontUpdateCartItem;
 }
 
 // =============================================================
@@ -177,7 +196,7 @@ async function removeFromCart(productId) {
 
     if (res.ok) {
       const data = await res.json();
-      const count = data.data?.items?.length || 0;
+      const count = calculateTotalUnits(data.data?.items);
       updateCartUI(count);
       return { success: true, data };
     }
@@ -216,18 +235,24 @@ async function clearCart() {
 }
 
 // =============================================================
-// UPDATE CART UI BADGE (Desktop + Mobile)
+// UPDATE CART UI BADGE (Desktop + Mobile + LocalStorage Cache)
 // =============================================================
 function updateCartUI(count) {
+  const c = parseInt(count, 10) || 0;
   const el = document.getElementById('cart-count');
   if (el) {
-    el.textContent = count;
+    el.textContent = c;
   }
   const mobileEl = document.getElementById('mobile-cart-count');
   if (mobileEl) {
-    mobileEl.textContent = count;
+    mobileEl.textContent = c;
   }
-  console.log('✅ Cart count updated to:', count);
+  try {
+    const slug = (CONFIG && CONFIG.storeSlug) || '';
+    if (slug) localStorage.setItem('cartCount_' + slug, c);
+    localStorage.setItem('cartCount', c);
+  } catch (e) {}
+  console.log('✅ Cart count updated to:', c);
 }
 
 // =============================================================
@@ -446,8 +471,21 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   initMobileMenu();
 
+  // Immediately hydrate badge from local cache to prevent flash of 0
+  try {
+    const token = localStorage.getItem('accessToken');
+    if (!token) {
+      updateCartUI(0);
+    } else {
+      const slug = (CONFIG && CONFIG.storeSlug) || '';
+      const cached = (slug && localStorage.getItem('cartCount_' + slug)) || localStorage.getItem('cartCount');
+      if (cached !== null && cached !== undefined) {
+        updateCartUI(parseInt(cached, 10) || 0);
+      }
+    }
+  } catch (e) {}
+
   const count = await getCartCount();
-  updateCartUI(count);
   updateAuthUI();
 
   console.log('✅ ===== APP.JS INITIALIZED =====');
@@ -460,7 +498,7 @@ window.Storefront = {
   CONFIG,
   addToCart,
   getCart,
-  updateCartItem,
+  updateCartItem: storefrontUpdateCartItem,
   removeFromCart,
   clearCart,
   login,

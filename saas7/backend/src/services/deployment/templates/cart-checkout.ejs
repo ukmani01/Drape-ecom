@@ -73,23 +73,14 @@
   (function() {
     'use strict';
 
-    console.log('🛒 [CART/CHECKOUT] V3.2 Initializing...');
-
-    // =============================================================
-    // 🔥 IMMEDIATE BADGE RESET (before any API calls)
-    // =============================================================
-    (function resetBadgeImmediately() {
-      const badge = document.getElementById('cart-count');
-      if (badge) {
-        badge.textContent = '0';
-        console.log('✅ Badge reset to 0 on page load (temporary)');
-      }
-    })();
+    console.log('🛒 [CART/CHECKOUT] V3.3 Initializing...');
 
     const STORE_SLUG = '<%= store.slug %>';
     const API_BASE = '/api';
     const CART_API = API_BASE + '/public/cart';
     const ORDERS_API = API_BASE + '/public/orders';
+
+    window.StorefrontCart = true;
 
     // =============================================================
     // ✅ HELPERS
@@ -110,13 +101,38 @@
       return '₹' + (amount || 0).toLocaleString('en-IN');
     }
 
-    function updateBadge(count) {
-      const badge = document.getElementById('cart-count');
-      if (badge) {
-        badge.textContent = count || 0;
-        console.log(`🖌️ Badge updated to: ${count || 0}`);
-      }
+    function calculateTotalUnits(items) {
+      if (!Array.isArray(items)) return 0;
+      return items.reduce((sum, item) => sum + (parseInt(item.quantity, 10) || 1), 0);
     }
+
+    function updateBadge(count) {
+      const c = parseInt(count, 10) || 0;
+      const badge = document.getElementById('cart-count');
+      if (badge) badge.textContent = c;
+      const mobileBadge = document.getElementById('mobile-cart-count');
+      if (mobileBadge) mobileBadge.textContent = c;
+      try {
+        if (STORE_SLUG) localStorage.setItem('cartCount_' + STORE_SLUG, c);
+        localStorage.setItem('cartCount', c);
+      } catch (e) {}
+      console.log(`🖌️ Badge updated to: ${c}`);
+    }
+
+    // Hydrate badge immediately from local cache
+    (function hydrateBadgeFromCache() {
+      try {
+        const token = getToken();
+        if (!token) {
+          updateBadge(0);
+          return;
+        }
+        const cached = localStorage.getItem('cartCount_' + STORE_SLUG) || localStorage.getItem('cartCount');
+        if (cached !== null && cached !== undefined) {
+          updateBadge(parseInt(cached, 10) || 0);
+        }
+      } catch (e) {}
+    })();
 
     function updateTotals(subtotal, shipping, total) {
       const el1 = document.getElementById('checkout-subtotal');
@@ -125,6 +141,95 @@
       if (el1) el1.textContent = formatCurrency(subtotal);
       if (el2) el2.textContent = formatCurrency(shipping);
       if (el3) el3.textContent = formatCurrency(total);
+    }
+
+    let currentCartItems = [];
+    const updateTimers = {};
+
+    function renderCartPage(items) {
+      currentCartItems = items || [];
+      const container = document.getElementById('cart-items');
+      const summary = document.getElementById('cart-summary');
+
+      if (!container) return;
+
+      if (currentCartItems.length === 0) {
+        container.innerHTML = '<p class="empty-cart">Your cart is empty.</p>';
+        if (summary) summary.style.display = 'none';
+        updateBadge(0);
+        return;
+      }
+
+      if (summary) summary.style.display = 'block';
+      let html = '';
+      let subtotal = 0;
+
+      currentCartItems.forEach(item => {
+        const price = parseFloat(item.price) || 0;
+        const qty = parseInt(item.quantity, 10) || 1;
+        const total = price * qty;
+        subtotal += total;
+        const productId = item.productId?._id || item.productId || item.id || '';
+
+        html += `
+          <div class="cart-item" data-product-id="${productId}">
+            <img src="${item.image || '/placeholder.jpg'}" alt="${item.name || 'Product'}">
+            <div class="cart-item-info">
+              <h4>${item.name || 'Product'}</h4>
+              <p>${formatCurrency(price)} × <span class="item-qty-label">${qty}</span></p>
+            </div>
+            <div class="cart-item-actions">
+              <button type="button" class="qty-btn" onclick="updateCartItem('${productId}', -1, true)">−</button>
+              <span class="qty-display">${qty}</span>
+              <button type="button" class="qty-btn" onclick="updateCartItem('${productId}', 1, true)">+</button>
+              <button type="button" onclick="removeCartItem('${productId}')" class="remove-btn">✕</button>
+            </div>
+            <div class="cart-item-total">${formatCurrency(total)}</div>
+          </div>
+        `;
+      });
+
+      container.innerHTML = html;
+      const shipping = subtotal > 0 ? 99 : 0;
+      const total = subtotal + shipping;
+      const subEl = document.getElementById('subtotal');
+      const shipEl = document.getElementById('shipping');
+      const totEl = document.getElementById('total');
+      if (subEl) subEl.textContent = formatCurrency(subtotal);
+      if (shipEl) shipEl.textContent = formatCurrency(shipping);
+      if (totEl) totEl.textContent = formatCurrency(total);
+
+      updateBadge(calculateTotalUnits(currentCartItems));
+    }
+
+    function renderCheckoutPage(items) {
+      const orderItemsContainer = document.getElementById('order-items');
+      if (!orderItemsContainer) return;
+
+      if (!items || items.length === 0) {
+        orderItemsContainer.innerHTML = '<p>Your cart is empty.</p>';
+        updateTotals(0, 0, 0);
+        updateBadge(0);
+        return;
+      }
+
+      let html = '';
+      let subtotal = 0;
+      items.forEach(item => {
+        const price = parseFloat(item.price) || 0;
+        const qty = parseInt(item.quantity, 10) || 1;
+        const total = price * qty;
+        subtotal += total;
+        html += `<div class="summary-item"><span>${item.name || 'Product'} × ${qty}</span><span>${formatCurrency(total)}</span></div>`;
+      });
+      orderItemsContainer.innerHTML = html;
+      const shipping = subtotal > 0 ? 99 : 0;
+      const total = subtotal + shipping;
+      updateTotals(subtotal, shipping, total);
+
+      window.__checkoutCart = { items: items, subtotal: subtotal, shipping: shipping, total: total };
+      console.log('✅ __checkoutCart saved with items:', items.length);
+      updateBadge(calculateTotalUnits(items));
     }
 
     // =============================================================
@@ -168,6 +273,7 @@
         if (res.status === 401) {
           const container = document.getElementById('cart-items');
           if (container) container.innerHTML = '<p class="empty-cart">Please login.</p>';
+          const summary = document.getElementById('cart-summary');
           if (summary) summary.style.display = 'none';
           updateBadge(0);
           return;
@@ -176,6 +282,7 @@
         if (!res.ok) {
           const container = document.getElementById('cart-items');
           if (container) container.innerHTML = '<p class="empty-cart">Failed to load.</p>';
+          const summary = document.getElementById('cart-summary');
           if (summary) summary.style.display = 'none';
           updateBadge(0);
           return;
@@ -187,82 +294,8 @@
 
         console.log('📦 Items found:', items.length);
 
-        // --- Render Cart Page ---
-        const container = document.getElementById('cart-items');
-        const summary = document.getElementById('cart-summary');
-
-        if (container) {
-          if (items.length === 0) {
-            container.innerHTML = '<p class="empty-cart">Your cart is empty.</p>';
-            if (summary) summary.style.display = 'none';
-            updateBadge(0);
-          } else {
-            if (summary) summary.style.display = 'block';
-            let html = '';
-            let subtotal = 0;
-
-            items.forEach(item => {
-              const price = parseFloat(item.price) || 0;
-              const qty = parseInt(item.quantity) || 1;
-              const total = price * qty;
-              subtotal += total;
-              const productId = item.productId?._id || item.productId || item.id || '';
-
-              html += `
-                <div class="cart-item" data-product-id="${productId}">
-                  <img src="${item.image || '/placeholder.jpg'}" alt="${item.name || 'Product'}">
-                  <div class="cart-item-info">
-                    <h4>${item.name || 'Product'}</h4>
-                    <p>${formatCurrency(price)} × ${qty}</p>
-                  </div>
-                  <div class="cart-item-actions">
-                    <button onclick="updateCartItem('${productId}', ${qty - 1})">−</button>
-                    <span>${qty}</span>
-                    <button onclick="updateCartItem('${productId}', ${qty + 1})">+</button>
-                    <button onclick="removeCartItem('${productId}')" class="remove-btn">✕</button>
-                  </div>
-                  <div class="cart-item-total">${formatCurrency(total)}</div>
-                </div>
-              `;
-            });
-
-            container.innerHTML = html;
-            const shipping = subtotal > 0 ? 99 : 0;
-            const total = subtotal + shipping;
-            document.getElementById('subtotal').textContent = formatCurrency(subtotal);
-            document.getElementById('shipping').textContent = formatCurrency(shipping);
-            document.getElementById('total').textContent = formatCurrency(total);
-            updateBadge(items.length);
-          }
-        }
-
-        // --- Render Checkout Page ---
-        const orderItemsContainer = document.getElementById('order-items');
-        if (orderItemsContainer) {
-          if (items.length === 0) {
-            orderItemsContainer.innerHTML = '<p>Your cart is empty.</p>';
-            updateTotals(0, 0, 0);
-            updateBadge(0);
-          } else {
-            let html = '';
-            let subtotal = 0;
-            items.forEach(item => {
-              const price = parseFloat(item.price) || 0;
-              const qty = parseInt(item.quantity) || 1;
-              const total = price * qty;
-              subtotal += total;
-              html += `<div class="summary-item"><span>${item.name || 'Product'} × ${qty}</span><span>${formatCurrency(total)}</span></div>`;
-            });
-            orderItemsContainer.innerHTML = html;
-            const shipping = subtotal > 0 ? 99 : 0;
-            const total = subtotal + shipping;
-            updateTotals(subtotal, shipping, total);
-            
-            window.__checkoutCart = { items: items, subtotal: subtotal, shipping: shipping, total: total };
-            console.log('✅ __checkoutCart saved with items:', items.length);
-            updateBadge(items.length);
-          }
-        }
+        renderCartPage(items);
+        renderCheckoutPage(items);
 
       } catch (error) {
         console.error('❌ Load error:', error);
@@ -312,35 +345,161 @@
     }
 
     // =============================================================
+    // ✅ OPTIMISTIC DOM UPDATE & BACKGROUND SYNC
+    // =============================================================
+    function applyOptimisticCartItemUpdate(productId, item) {
+      const container = document.getElementById('cart-items');
+      const unitPrice = parseFloat(item.price) || 0;
+      const qty = parseInt(item.quantity, 10) || 1;
+      const total = unitPrice * qty;
+
+      if (container) {
+        const itemEl = container.querySelector(`.cart-item[data-product-id="${productId}"]`);
+        if (itemEl) {
+          const qtySpan = itemEl.querySelector('.qty-display') || itemEl.querySelector('.cart-item-actions span');
+          if (qtySpan) qtySpan.textContent = qty;
+
+          const infoP = itemEl.querySelector('.cart-item-info p');
+          if (infoP) infoP.textContent = `${formatCurrency(unitPrice)} × ${qty}`;
+
+          const totalEl = itemEl.querySelector('.cart-item-total');
+          if (totalEl) totalEl.textContent = formatCurrency(total);
+        }
+      }
+
+      let subtotal = 0;
+      currentCartItems.forEach(it => {
+        subtotal += (parseFloat(it.price) || 0) * (parseInt(it.quantity, 10) || 1);
+      });
+      const shipping = subtotal > 0 ? 99 : 0;
+      const grandTotal = subtotal + shipping;
+
+      const subEl = document.getElementById('subtotal');
+      const shipEl = document.getElementById('shipping');
+      const totEl = document.getElementById('total');
+      if (subEl) subEl.textContent = formatCurrency(subtotal);
+      if (shipEl) shipEl.textContent = formatCurrency(shipping);
+      if (totEl) totEl.textContent = formatCurrency(grandTotal);
+
+      updateTotals(subtotal, shipping, grandTotal);
+
+      const totalUnits = calculateTotalUnits(currentCartItems);
+      updateBadge(totalUnits);
+    }
+
+    function queueCartItemSync(productId, quantity) {
+      if (updateTimers[productId]) {
+        clearTimeout(updateTimers[productId]);
+      }
+
+      updateTimers[productId] = setTimeout(async () => {
+        delete updateTimers[productId];
+        try {
+          const token = getToken();
+          if (!token) {
+            alert('Please login.');
+            return;
+          }
+          const headers = getHeaders('application/json');
+          const url = CART_API + '?_=' + Date.now();
+          const res = await fetch(url, {
+            method: 'PUT',
+            headers,
+            body: JSON.stringify({ productId, quantity, storeSlug: STORE_SLUG })
+          });
+
+          if (res.ok) {
+            const data = await res.json();
+            const cart = data.data || data || {};
+            if (cart.items) {
+              currentCartItems = cart.items;
+              updateBadge(calculateTotalUnits(currentCartItems));
+            }
+          } else {
+            const err = await res.json().catch(() => ({}));
+            console.error('Update failed:', err);
+            alert('Update failed: ' + (err.message || 'Try again.'));
+            await loadCart();
+          }
+        } catch (err) {
+          console.error('Update network error:', err);
+          await loadCart();
+        }
+      }, 250);
+    }
+
+    // =============================================================
     // ✅ UPDATE / REMOVE (Globals)
     // =============================================================
-    window.updateCartItem = async function(productId, quantity) {
-      if (quantity <= 0) { await removeCartItem(productId); return; }
-      try {
-        const token = getToken();
-        if (!token) { alert('Please login.'); return; }
-        const headers = getHeaders('application/json');
-        const url = CART_API + '?_=' + Date.now();
-        const res = await fetch(url, {
-          method: 'PUT',
-          headers,
-          body: JSON.stringify({ productId, quantity, storeSlug: STORE_SLUG })
-        });
-        if (res.ok) await loadCart();
-        else { const err = await res.json(); alert('Update failed: ' + (err.message || 'Try again.')); }
-      } catch (e) { console.error('Update error:', e); alert('Error updating.'); }
+    window.updateCartItem = async function(productId, qtyOrDelta, isDelta) {
+      const item = currentCartItems.find(it => {
+        const id = it.productId?._id || it.productId || it.id || '';
+        return id === productId;
+      });
+
+      if (!item) {
+        console.warn('Item not found in current cart, reloading...', productId);
+        await loadCart();
+        return;
+      }
+
+      let newQty;
+      if (isDelta === true) {
+        newQty = (parseInt(item.quantity, 10) || 1) + qtyOrDelta;
+      } else {
+        newQty = parseInt(qtyOrDelta, 10);
+      }
+
+      if (newQty <= 0) {
+        await window.removeCartItem(productId);
+        return;
+      }
+
+      // 1. Instant optimistic UI update (<5ms)
+      item.quantity = newQty;
+      applyOptimisticCartItemUpdate(productId, item);
+
+      // 2. Debounced background API sync
+      queueCartItemSync(productId, newQty);
     };
 
     window.removeCartItem = async function(productId) {
+      if (updateTimers[productId]) {
+        clearTimeout(updateTimers[productId]);
+        delete updateTimers[productId];
+      }
+
+      // Optimistically remove from current items
+      currentCartItems = currentCartItems.filter(it => {
+        const id = it.productId?._id || it.productId || it.id || '';
+        return id !== productId;
+      });
+
+      // Optimistically re-render cart
+      renderCartPage(currentCartItems);
+
       try {
         const token = getToken();
         if (!token) { alert('Please login.'); return; }
         const headers = getHeaders();
         const url = CART_API + '/' + productId + '?storeSlug=' + STORE_SLUG + '&_=' + Date.now();
         const res = await fetch(url, { method: 'DELETE', headers });
-        if (res.ok) await loadCart();
-        else { const err = await res.json(); alert('Remove failed: ' + (err.message || 'Try again.')); }
-      } catch (e) { console.error('Remove error:', e); alert('Error removing.'); }
+        if (res.ok) {
+          const data = await res.json();
+          const cart = data.data || data || {};
+          if (cart.items) {
+            currentCartItems = cart.items;
+            updateBadge(calculateTotalUnits(currentCartItems));
+          }
+        } else {
+          const err = await res.json().catch(() => ({}));
+          alert('Remove failed: ' + (err.message || 'Try again.'));
+          await loadCart();
+        }
+      } catch (e) {
+        console.error('Remove error:', e);
+        await loadCart();
+      }
     };
 
     // =============================================================
@@ -461,8 +620,12 @@
         if (res.ok) {
           const data = await res.json();
           sessionStorage.setItem('orderPlaced', 'true');
+          try {
+            localStorage.removeItem('cartCount_' + STORE_SLUG);
+            localStorage.removeItem('cartCount');
+            localStorage.removeItem('cartItems');
+          } catch (e) {}
           updateBadge(0);
-          localStorage.removeItem('cartItems');
           alert('✅ Order placed successfully!');
           const orderId = data.data?.orderId || data.orderId;
           window.location.href = '/stores/' + STORE_SLUG + '/order-confirmation.html?orderId=' + orderId;
