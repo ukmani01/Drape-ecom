@@ -29,6 +29,8 @@
   --border-strong: #d4d4d4;
 
   /* State + focus */
+  --logo-case: uppercase;           /* set to none for stores that want their name as typed */
+  --logo-tracking: 0.14em;
   --focus: #111111;
   --danger: #b91c1c;
 
@@ -170,11 +172,22 @@ a:hover { color: var(--accent); }
   top: 0;
   z-index: 100;
 }
+/* Glass effect lives on a pseudo-element, NOT on .store-header itself.
+   backdrop-filter / filter / transform on an element turns it into the containing block for any
+   position:fixed descendant. The full-screen mobile menu (.mobile-nav-overlay) is a fixed child of
+   the header, so a filter on the header squeezed it into the header's own height and its links
+   were clipped away. On a pseudo-element the effect looks identical but the menu is free again. */
 @supports ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
-  .store-header {
+  .store-header { background: transparent; }
+  .store-header::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
     background: rgba(255, 255, 255, 0.72);
     -webkit-backdrop-filter: saturate(160%) blur(14px);
     backdrop-filter: saturate(160%) blur(14px);
+    pointer-events: none;
   }
 }
 .header-inner {
@@ -186,13 +199,14 @@ a:hover { color: var(--accent); }
 .logo { flex: 1 1 0; min-width: 0; }
 .logo a {
   font-family: var(--font-display);
-  font-size: 26px;
+  font-size: 22px;
   font-weight: 600;
   color: var(--text);
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  letter-spacing: -0.02em;
+  letter-spacing: var(--logo-tracking);
+  text-transform: var(--logo-case);
   line-height: 1;
   max-width: 100%;
 }
@@ -200,6 +214,7 @@ a:hover { color: var(--accent); }
 .logo img { max-height: 40px; width: auto; }
 .logo-text {
   color: var(--text);
+  margin-right: calc(-1 * var(--logo-tracking));   /* cancels the trailing letter-space so the name is optically centred */
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -255,12 +270,14 @@ a:hover { color: var(--accent); }
 }
 .cart-icon:hover { color: var(--accent); }
 .cart-icon:active { opacity: 0.7; }
+/* If the anchor holds more than one icon, show only the first (the shopping bag) */
+.cart-icon > :is(svg, img, i, .cart-svg-icon) ~ :is(svg, img, i, .cart-svg-icon) { display: none; }
 .cart-svg-icon {
   display: block;
-  width: 22px;
-  height: 22px;
+  width: 24px;
+  height: 24px;
   color: currentColor;
-  stroke-width: 1.75;
+  stroke-width: 1.6;
   transition: transform 0.2s ease;
 }
 .cart-icon:hover .cart-svg-icon {
@@ -268,16 +285,16 @@ a:hover { color: var(--accent); }
 }
 .cart-icon #cart-count {
   position: absolute;
-  top: 3px;
-  right: 0;
+  top: 5px;
+  right: 3px;
   background: var(--secondary);
   color: var(--white);
   font-family: var(--font);
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
   line-height: 1;
-  min-width: 17px;
-  height: 17px;
+  min-width: 16px;
+  height: 16px;
   padding: 0 4px;
   border-radius: 9px;
   box-shadow: 0 0 0 2px var(--white);
@@ -316,9 +333,9 @@ a:hover { color: var(--accent); }
   flex-direction: column;
   justify-content: space-between;
   box-sizing: content-box;
-  width: 26px;
-  height: 18px;
-  padding: 13px;
+  width: 22px;
+  height: 14px;
+  padding: 15px;                   /* 52px touch target */
   background: transparent;
   border: none;
   cursor: pointer;
@@ -326,7 +343,7 @@ a:hover { color: var(--accent); }
 }
 .mobile-menu-toggle span {
   display: block;
-  height: 2px;
+  height: 1.5px;
   width: 100%;
   background: var(--text);
   border-radius: 2px;
@@ -1431,12 +1448,14 @@ main .order-confirmation-page .btn-primary:hover {
 }
 
 /* ==========================================================================
-   Footer — pure black, neutral greys, no coloured glow
+   Footer — the original black design (serif brand, letter-spaced headings, round social icons,
+   purple accent hovers, large brand wordmark) kept as it was; only padding, gaps and the wordmark
+   scale were reduced.
    ========================================================================== */
 .store-footer {
   background: #000000;
-  color: #a3a3a3;
-  padding: clamp(32px, 5vw, 48px) 0 calc(20px + env(safe-area-inset-bottom, 0px));
+  color: #a1a1aa;
+  padding: clamp(36px, 5vw, 56px) 0 calc(24px + env(safe-area-inset-bottom, 0px));
   margin-top: auto;
   position: relative;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
@@ -1451,14 +1470,14 @@ main .order-confirmation-page .btn-primary:hover {
   width: 70%;
   max-width: 900px;
   height: 1px;
-  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.28) 50%, transparent 100%);
+  background: linear-gradient(90deg, transparent 0%, rgba(168, 85, 247, 0.45) 50%, transparent 100%);
   pointer-events: none;
 }
 .footer-grid {
   display: grid;
   grid-template-columns: 2fr 1fr 1.3fr 1fr;
   gap: clamp(24px, 4vw, 48px);
-  margin-bottom: clamp(20px, 3vw, 32px);
+  margin-bottom: clamp(16px, 3vw, 28px);
   align-items: start;
 }
 .footer-grid > * { min-width: 0; }
@@ -1470,30 +1489,34 @@ main .order-confirmation-page .btn-primary:hover {
   grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
 }
 
-/* Brand signature — covers both the current markup (h3 / p) and the titled variants */
+/* Brand signature */
 .footer-brand {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
 }
 .footer-brand h3,
 .footer-brand-title {
-  font-family: var(--font-display);
-  font-size: clamp(24px, 3vw, 30px);
+  font-family: var(--font-display), 'Playfair Display', Georgia, serif;
+  font-size: clamp(22px, 2.6vw, 28px);
   font-weight: 600;
   line-height: 1.15;
   letter-spacing: -0.02em;
   color: #ffffff;
   display: inline-block;
   overflow-wrap: anywhere;
+  text-shadow: 0 0 24px rgba(192, 132, 252, 0.25);
   transition: var(--transition);
 }
-.footer-brand-title:hover { color: #ffffff; }
+.footer-brand-title:hover {
+  color: #ffffff;
+  text-shadow: 0 0 28px rgba(192, 132, 252, 0.45);
+}
 .footer-brand p,
 .footer-brand-tagline {
   font-size: 14px;
-  line-height: 1.7;
-  color: #a3a3a3;
+  line-height: 1.6;
+  color: #9ca3af;
   max-width: 32ch;
   margin: 0;
 }
@@ -1504,20 +1527,20 @@ main .order-confirmation-page .btn-primary:hover {
 .footer-social h4 {
   color: #ffffff;
   font-family: var(--font);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
-  margin-bottom: var(--space-3);
-  letter-spacing: 0.12em;
+  margin-bottom: 14px;
+  letter-spacing: 0.15em;
   text-transform: uppercase;
 }
 
 /* Quick links */
 .footer-links ul { list-style: none; padding: 0; margin: 0; }
-.footer-links li { margin-bottom: 2px; }
+.footer-links li { margin-bottom: 4px; }
 .footer-links a {
   display: inline-block;
-  padding: 4px 0;
-  color: #a3a3a3;
+  padding: 3px 0;
+  color: #9ca3af;
   font-size: 14px;
   letter-spacing: 0.01em;
   transition: color 0.25s ease, transform 0.25s ease;
@@ -1533,14 +1556,14 @@ main .order-confirmation-page .btn-primary:hover {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
   font-size: 14px;
-  color: #a3a3a3;
+  color: #9ca3af;
   line-height: 1.5;
   overflow-wrap: anywhere;
 }
 .footer-contact p a {
-  color: #a3a3a3;
+  color: #9ca3af;
   transition: color 0.25s ease;
 }
 .footer-contact p a:hover {
@@ -1550,11 +1573,11 @@ main .order-confirmation-page .btn-primary:hover {
 .footer-icon {
   display: inline-block;
   flex-shrink: 0;
-  color: #a3a3a3;
+  color: #9ca3af;
   transition: color 0.25s ease, stroke 0.25s ease, transform 0.25s ease;
 }
 .footer-contact p:hover .footer-icon {
-  color: #ffffff;
+  color: #c084fc;
 }
 
 /* Social media links */
@@ -1567,15 +1590,15 @@ main .order-confirmation-page .btn-primary:hover {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 44px;
-  height: 44px;
-  min-width: 44px;
-  min-height: 44px;
+  width: 42px;
+  height: 42px;
+  min-width: 42px;
+  min-height: 42px;
   border-radius: 50%;
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.03);
   color: #e5e7eb;
-  transition: color 0.25s ease, background-color 0.25s ease, border-color 0.25s ease, transform 0.25s ease;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .social-links a .social-svg {
   width: 17px;
@@ -1584,16 +1607,16 @@ main .order-confirmation-page .btn-primary:hover {
   transition: transform 0.25s ease;
 }
 .social-links a:hover {
-  border-color: rgba(255, 255, 255, 0.55);
-  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(192, 132, 252, 0.55);
+  background: rgba(168, 85, 247, 0.12);
   color: #ffffff;
   transform: translateY(-2px);
 }
 .social-links a:hover .social-svg {
-  color: #ffffff;
+  color: #c084fc;
 }
 .social-links a:focus-visible {
-  outline: 2px solid #ffffff;
+  outline: 2px solid #c084fc;
   outline-offset: 2px;
 }
 .footer-links a:focus-visible,
@@ -1604,15 +1627,12 @@ main .order-confirmation-page .btn-primary:hover {
   outline-offset: 3px;
 }
 
-/* ==========================================================================
-   Optional large brand wordmark (styles only apply if the template renders it)
-   Quiet charcoal-on-black watermark; no colour, no glow.
-   ========================================================================== */
+/* Signature giant display brand title (original watermark style, scaled down) */
 .footer-brand-display {
   width: 100%;
   text-align: center;
-  padding: clamp(20px, 3.5vw, 44px) 0 clamp(8px, 1.5vw, 18px);
-  margin-top: clamp(20px, 3vw, 36px);
+  padding: clamp(10px, 2vw, 24px) 0 clamp(4px, 1vw, 10px);
+  margin-top: clamp(12px, 2vw, 20px);
   border-top: 1px solid rgba(255, 255, 255, 0.07);
   overflow: hidden;
   display: flex;
@@ -1620,17 +1640,17 @@ main .order-confirmation-page .btn-primary:hover {
   align-items: center;
 }
 .footer-display-title {
-  font-family: var(--font-display);
-  font-size: clamp(2.8rem, 12vw, 10rem);
+  font-family: var(--font-display), 'Playfair Display', Georgia, serif;
+  font-size: clamp(2.4rem, 10vw, 7.5rem);
   font-weight: 700;
-  line-height: 0.9;
+  line-height: 0.88;
   letter-spacing: -0.03em;
   text-align: center;
   margin: 0;
   padding: 0;
   max-width: 100%;
   white-space: nowrap;
-  background: linear-gradient(180deg, #3a3a3a 0%, #222222 55%, #0d0d0d 100%);
+  background: linear-gradient(180deg, #6d479e 0%, #462572 45%, #22103a 82%, #0e051a 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -1638,19 +1658,25 @@ main .order-confirmation-page .btn-primary:hover {
   user-select: none;
   pointer-events: none;
 }
+.footer-brand-display:hover .footer-display-title {
+  background: linear-gradient(180deg, #8155ba 0%, #552d8c 45%, #2a1447 82%, #120722 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
 
 /* Footer bottom bar */
 .footer-bottom {
   border-top: 1px solid rgba(255, 255, 255, 0.08);
-  padding-top: var(--space-4);
+  padding-top: 16px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
-  gap: 16px;
+  gap: 12px;
   font-size: 13px;
   letter-spacing: 0.02em;
-  color: #8a8a8a;
+  color: #71717a;
 }
 .footer-bottom p { margin: 0; }
 .footer-legal-links {
@@ -1659,7 +1685,7 @@ main .order-confirmation-page .btn-primary:hover {
   gap: 20px;
 }
 .footer-legal-links a {
-  color: #8a8a8a;
+  color: #71717a;
   font-size: 13px;
   transition: color 0.2s ease;
 }
@@ -1723,7 +1749,7 @@ main .order-confirmation-page .btn-primary:hover {
   .mobile-menu-toggle { display: flex; }
   .store-header { padding: 12px 0; }
   .header-inner { flex-direction: row; align-items: center; justify-content: space-between; flex-wrap: wrap; row-gap: 8px; gap: 12px; }
-  .logo a { font-size: 24px; }
+  .logo a { font-size: clamp(16px, 4.8vw, 20px); }
 
   /* Existing nav stays usable on its own row; hidden only if a hamburger exists */
   .header-nav {
@@ -1740,11 +1766,36 @@ main .order-confirmation-page .btn-primary:hover {
   .header-actions { gap: 8px; }
   #auth-buttons a { padding: 8px 14px; font-size: 13px; }
 
-  .hero-image { min-height: clamp(380px, 68vh, 640px); min-height: clamp(380px, 68svh, 640px); }
-  .hero-overlay { background: linear-gradient(180deg, rgba(0, 0, 0, 0.42) 0%, rgba(0, 0, 0, 0.6) 100%); }
+  /* Mobile bar: [menu]  [store name]  [cart]
+     Equal 1fr side tracks keep the name centred in the viewport whatever the widths of the
+     toggle and cart. .header-actions uses display:contents so the cart (and the toggle, if it
+     lives inside it) become direct grid items without any DOM change. */
+  .header-inner:has(.mobile-menu-toggle) {
+    display: grid;
+    grid-template-columns: minmax(52px, 1fr) minmax(0, auto) minmax(52px, 1fr);
+    align-items: center;
+    gap: 8px;
+  }
+  .header-inner:has(.mobile-menu-toggle) .header-actions { display: contents; }
+  .header-inner:has(.mobile-menu-toggle) .mobile-menu-toggle { grid-column: 1; grid-row: 1; justify-self: start; margin-left: -15px; }
+  .header-inner:has(.mobile-menu-toggle) .logo { grid-column: 2; grid-row: 1; flex: none; justify-self: center; max-width: 100%; text-align: center; }
+  .header-inner:has(.mobile-menu-toggle) .cart-icon { grid-column: 3; grid-row: 1; justify-self: end; margin-right: -10px; padding: 10px; }
+
+  /* Near full-screen hero: viewport (small-viewport units, so browser bars don't clip it) minus the sticky bar */
+  .hero-image {
+    min-height: calc(100vh - 70px);
+    min-height: calc(100svh - 70px);
+    align-items: flex-end;
+  }
+  .hero-overlay { background: linear-gradient(180deg, rgba(0, 0, 0, 0.1) 0%, rgba(0, 0, 0, 0.2) 40%, rgba(0, 0, 0, 0.68) 100%); }
   .hero-content { padding: 40px var(--gutter); }
-  .hero-image .hero-content { padding-left: var(--gutter); max-width: 100%; }
-  .hero-content h1 { font-size: clamp(32px, 9vw, 40px); }
+  .hero-image .hero-content {
+    width: 100%;
+    max-width: 100%;
+    padding: 0 var(--gutter) calc(40px + env(safe-area-inset-bottom, 0px));
+  }
+  .hero-content h1 { font-size: clamp(30px, 8.5vw, 40px); margin-bottom: 12px; }
+  .hero-content p { font-size: 16px; margin-bottom: 24px; }
   .hero-content-center { min-height: clamp(280px, 48vh, 440px); }
 
   .product-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 32px 14px; }
@@ -1758,7 +1809,10 @@ main .order-confirmation-page .btn-primary:hover {
   .cart-item-total { grid-column: 1 / -1; text-align: right; }
   .thumbnail-grid { grid-template-columns: repeat(4, 1fr); gap: 8px; }
 
-  .section-header { margin-bottom: 24px; }
+  .section-header { margin-bottom: var(--space-5); }
+  .categories-section { padding: var(--space-7) 0 var(--space-5); }
+  .categories-section h2 { margin-bottom: var(--space-5); }
+  .products-section { padding: var(--space-5) 0 var(--space-7); }
 
   .footer-bottom {
     flex-direction: column;
@@ -1773,7 +1827,6 @@ main .order-confirmation-page .btn-primary:hover {
 
 /* Small mobile */
 @media (max-width: 480px) {
-  .hero-image { min-height: clamp(360px, 62vh, 560px); min-height: clamp(360px, 62svh, 560px); }
   .product-grid { gap: 28px 12px; }
   .product-title { font-size: 13px; padding: 10px 0 2px; }
   .product-card .product-price { font-size: 13px; }
@@ -1787,12 +1840,15 @@ main .order-confirmation-page .btn-primary:hover {
   .cart-summary, .checkout-summary { padding: 20px; }
 
   .footer-grid,
-  .footer-grid:has(.footer-contact:not(:has(p))):has(.footer-social:not(:has(a))) { grid-template-columns: 1fr; gap: 24px; }
+  .footer-grid:has(.footer-contact:not(:has(p))):has(.footer-social:not(:has(a))) { grid-template-columns: 1fr; gap: 20px; }
+  .footer-links ul { columns: 2; column-gap: 24px; }
+  .footer-links li { break-inside: avoid; }
 }
 
 /* Very small phones (320–360px) */
 @media (max-width: 360px) {
-  .logo a { font-size: 22px; }
+  .logo a { font-size: 15px; letter-spacing: 0.1em; }
+  .logo-text { margin-right: -0.1em; }
   #auth-buttons { gap: 6px; }
   #auth-buttons a { padding: 8px 10px; font-size: 12px; }
   .header-nav { gap: 16px; }
